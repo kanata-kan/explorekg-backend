@@ -118,7 +118,6 @@ const PackRelationSchema = new Schema<IPackRelation>(
         100,
         'travelPackLocaleGroupId must not exceed 100 characters',
       ],
-      index: true,
     },
 
     relations: {

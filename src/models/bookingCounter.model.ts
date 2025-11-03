@@ -31,7 +31,6 @@ const bookingCounterSchema = new Schema<IBookingCounter>(
       type: String,
       required: true,
       unique: true,
-      index: true,
       match: /^\d{8}$/, // YYYYMMDD format
     },
     counter: {
@@ -102,11 +101,6 @@ bookingCounterSchema.statics.resetDailyCounter = async function (
     { upsert: true }
   );
 };
-
-/**
- * Index for date lookup
- */
-bookingCounterSchema.index({ date: 1 });
 
 /**
  * Export Booking Counter Model

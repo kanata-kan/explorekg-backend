@@ -171,7 +171,6 @@ const GuestSchema = new Schema<IGuest>(
     expiresAt: {
       type: Date,
       required: true,
-      index: true,
       default: () => {
         const date = new Date();
         date.setDate(date.getDate() + 30); // 30 days from now

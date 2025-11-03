@@ -254,7 +254,6 @@ const bookingSchema = new Schema<IBooking>(
     expiresAt: {
       type: Date,
       required: true,
-      index: true,
     },
 
     paymentMethod: String,

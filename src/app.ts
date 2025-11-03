@@ -106,7 +106,7 @@ export const createApp = () => {
   app.use('/api/v1/admin', strictRateLimit, adminRouter);
 
   // Payment endpoints get the strictest rate limiting
-  app.use('/api/v1/bookings/*/payment', paymentRateLimit);
+  app.use('/api/v1/bookings/:id/payment', paymentRateLimit);
 
   // Setup honeypot endpoints for attack detection
   honeypotEndpoints(app);

@@ -77,13 +77,12 @@ const TravelPackLocalizedSchema = new Schema(
 
 const TravelPackSchema = new Schema<ITravelPack>(
   {
-    slug: { type: String, required: true, unique: true },
+    slug: { type: String, required: true },
     localeGroupId: {
       type: String,
       required: true,
       minlength: 3,
       maxlength: 100,
-      index: true, // indexed for efficient translation queries
     },
     status: {
       type: String,
