@@ -1,0 +1,68 @@
+[
+  {
+    "id": "pack-1",
+    "name": "Rent a Car & Go",
+    "description": "Live the adventure at your own pace with a fully equipped 4x4. Travel freely, camp under the stars, or stay in yurts and hotels.",
+    "coverImage": "/images/travel-packs/rent_car_go.svg",
+    "features": [
+      "4x4 car rental with camping equipment",
+      "Option to upgrade accommodations (yurts, guesthouses, hotels)",
+      "Freedom to choose your route and pace",
+      "Perfect for families and small groups"
+    ],
+    "duration": null,
+    "price": null,
+    "ctaLabel": "See Details",
+    "metadata": {
+      "title": "Rent a Car & Go | Explore Kyrgyzstan",
+      "description": "Enjoy Kyrgyzstan at your own pace with a 4x4 and camping gear.",
+      "path": "/travel-packs/pack-1",
+      "image": "/images/travel-packs/rent_car_go.webp",
+      "alt": "4x4 car rental adventure in Kyrgyzstan"
+    }
+  },
+  {
+    "id": "pack-2",
+    "name": "Let an Expert Guide You",
+    "description": "Relax while a local driver-guide takes you through hidden trails, cooks for you, and shares cultural insights.",
+    "coverImage": "/images/travel-packs/expert_guide.svg",
+    "features": [
+      "Experienced driver-guide included",
+      "Local knowledge: secret spots, cultural insights, traditions",
+      "Wild cooking experience by your guide",
+      "Comfortable and safe journey"
+    ],
+    "duration": null,
+    "price": null,
+    "ctaLabel": "See Details",
+    "metadata": {
+      "title": "Guided Adventure | Explore Kyrgyzstan",
+      "description": "Discover Kyrgyzstan worry-free with an expert local guide.",
+      "path": "/travel-packs/pack-2",
+      "image": "/images/travel-packs/expert_guide.webp",
+      "alt": "Guided travel experience in Kyrgyzstan"
+    }
+  },
+  {
+    "id": "pack-3",
+    "name": "Join a Group Adventure",
+    "description": "Share the journey with fellow explorers in a fun and social group setup across Kyrgyzstan.",
+    "coverImage": "/images/travel-packs/group_adventure.svg",
+    "features": [
+      "Group size: 15–20 people",
+      "Multi-car or bus adventure setup",
+      "Social and fun atmosphere",
+      "Unique shared experiences in nature"
+    ],
+    "duration": null,
+    "price": null,
+    "ctaLabel": "See Details",
+    "metadata": {
+      "title": "Group Adventure | Explore Kyrgyzstan",
+      "description": "Join a group of 15–20 explorers and share unforgettable moments.",
+      "path": "/travel-packs/pack-3",
+      "image": "/images/travel-packs/group_adventure.webp",
+      "alt": "Group travel adventure in Kyrgyzstan"
+    }
+  }
+]

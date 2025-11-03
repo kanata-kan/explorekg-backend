@@ -1,0 +1,441 @@
+### ============================================
+### ExploreKG Admin API Examples
+### Base URL: http://localhost:5000/api/v1
+### ============================================
+
+@baseUrl = http://localhost:5000/api/v1
+@token = your_jwt_token_here
+
+### ============================================
+### ADMIN AUTHENTICATION
+### ============================================
+
+### 1. Admin Login
+POST {{baseUrl}}/admin/login
+Content-Type: application/json
+
+{
+  "email": "admin@explorekg.com",
+  "password": "SecurePassword123!"
+}
+
+### 2. Get Current Admin Info
+GET {{baseUrl}}/admin/me
+Authorization: Bearer {{token}}
+
+### 3. Change Password
+POST {{baseUrl}}/admin/change-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "OldPassword123!",
+  "newPassword": "NewPassword456!",
+  "confirmPassword": "NewPassword456!"
+}
+
+### 4. Logout
+POST {{baseUrl}}/admin/logout
+Authorization: Bearer {{token}}
+
+### ============================================
+### ADMIN MANAGEMENT (SUPER_ADMIN ONLY)
+### ============================================
+
+### 1. Get Statistics
+GET {{baseUrl}}/admin/statistics
+Authorization: Bearer {{token}}
+
+### 2. Create Admin
+POST {{baseUrl}}/admin
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "newadmin@explorekg.com",
+  "password": "SecurePassword123!",
+  "fullName": "New Admin",
+  "role": "ADMIN"
+}
+
+### 3. Get All Admins
+GET {{baseUrl}}/admin
+Authorization: Bearer {{token}}
+
+### 4. Get Admin by ID
+GET {{baseUrl}}/admin/admin_123
+Authorization: Bearer {{token}}
+
+### 5. Update Admin
+PATCH {{baseUrl}}/admin/admin_456
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fullName": "Updated Name",
+  "role": "EDITOR"
+}
+
+### 6. Delete Admin
+DELETE {{baseUrl}}/admin/admin_456
+Authorization: Bearer {{token}}
+
+### 7. Reset Admin Password
+POST {{baseUrl}}/admin/admin_456/reset-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "newPassword": "NewPassword123!"
+}
+
+### ============================================
+### TRAVEL PACKS MANAGEMENT
+### ============================================
+
+### 1. Get Travel Pack Statistics
+GET {{baseUrl}}/travel-packs/statistics
+Authorization: Bearer {{token}}
+
+### 2. Create Travel Pack
+POST {{baseUrl}}/travel-packs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Silk Road Explorer",
+  "locale": "en",
+  "slug": "silk-road-explorer",
+  "localeGroupId": "pack_group_new",
+  "price": 1200,
+  "duration": 10,
+  "maxPersons": 6,
+  "description": "Explore the ancient Silk Road...",
+  "highlights": ["Historic cities", "Traditional crafts"],
+  "included": ["Accommodation", "Meals", "Transport"],
+  "notIncluded": ["Flights", "Personal expenses"],
+  "itinerary": [],
+  "images": ["https://..."],
+  "isAvailable": true
+}
+
+### 3. Update Travel Pack
+PATCH {{baseUrl}}/travel-packs/pack_789
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "price": 1150,
+  "isAvailable": false
+}
+
+### 4. Delete Travel Pack
+DELETE {{baseUrl}}/travel-packs/pack_789
+Authorization: Bearer {{token}}
+
+### ============================================
+### ACTIVITIES MANAGEMENT
+### ============================================
+
+### 1. Get Activity Statistics
+GET {{baseUrl}}/activities/statistics
+Authorization: Bearer {{token}}
+
+### 2. Create Activity
+POST {{baseUrl}}/activities
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Mountain Hiking",
+  "locale": "en",
+  "slug": "mountain-hiking",
+  "localeGroupId": "activity_group_new",
+  "price": 150,
+  "duration": 1,
+  "description": "Full day hiking...",
+  "difficulty": "moderate",
+  "minPersons": 2,
+  "maxPersons": 8,
+  "isAvailable": true
+}
+
+### 3. Update Activity
+PATCH {{baseUrl}}/activities/activity_789
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "price": 140,
+  "isAvailable": true
+}
+
+### 4. Delete Activity
+DELETE {{baseUrl}}/activities/activity_789
+Authorization: Bearer {{token}}
+
+### 5. Update Activity Availability
+PATCH {{baseUrl}}/activities/activity_789/availability
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "isAvailable": false
+}
+
+### 6. Associate Activity with Packs
+POST {{baseUrl}}/activities/activity_789/packs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "packIds": ["pack_group_123", "pack_group_456"]
+}
+
+### ============================================
+### CARS MANAGEMENT
+### ============================================
+
+### 1. Get Car Statistics
+GET {{baseUrl}}/cars/statistics
+Authorization: Bearer {{token}}
+
+### 2. Create Car
+POST {{baseUrl}}/cars
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Mercedes Sprinter",
+  "locale": "en",
+  "slug": "mercedes-sprinter",
+  "localeGroupId": "car_group_new",
+  "price": 200,
+  "type": "van",
+  "capacity": 12,
+  "transmission": "automatic",
+  "fuelType": "diesel",
+  "pricePerDay": 200,
+  "isAvailable": true
+}
+
+### 3. Update Car
+PATCH {{baseUrl}}/cars/car_789
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "price": 180,
+  "isAvailable": true
+}
+
+### 4. Delete Car
+DELETE {{baseUrl}}/cars/car_789
+Authorization: Bearer {{token}}
+
+### 5. Update Car Availability
+PATCH {{baseUrl}}/cars/car_789/availability
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "isAvailable": false
+}
+
+### 6. Associate Car with Packs
+POST {{baseUrl}}/cars/car_789/packs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "packIds": ["pack_group_123", "pack_group_456"]
+}
+
+### ============================================
+### PACK RELATIONS MANAGEMENT
+### ============================================
+
+### 1. Get All Pack Relations
+GET {{baseUrl}}/pack-relations
+Authorization: Bearer {{token}}
+
+### 2. Create Pack Relation
+POST {{baseUrl}}/pack-relations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "travelPackLocaleGroupId": "pack_group_new",
+  "availableActivities": [
+    {
+      "localeGroupId": "activity_group_001",
+      "isOptional": true
+    }
+  ],
+  "availableCars": [
+    {
+      "localeGroupId": "car_group_001"
+    }
+  ]
+}
+
+### 3. Update Pack Relation
+PUT {{baseUrl}}/pack-relations/pack_group_new
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "availableActivities": [
+    {
+      "localeGroupId": "activity_group_002",
+      "isOptional": true
+    }
+  ]
+}
+
+### 4. Delete Pack Relation
+DELETE {{baseUrl}}/pack-relations/pack_group_new
+Authorization: Bearer {{token}}
+
+### ============================================
+### BOOKING MANAGEMENT
+### ============================================
+
+### 1. Get All Bookings
+GET {{baseUrl}}/bookings
+Authorization: Bearer {{token}}
+
+### 2. Get Booking Statistics
+GET {{baseUrl}}/bookings/statistics
+Authorization: Bearer {{token}}
+
+### 3. Cleanup Expired Bookings
+POST {{baseUrl}}/bookings/cleanup-expired
+Authorization: Bearer {{token}}
+
+### 4. Update Booking Status
+PATCH {{baseUrl}}/bookings/BK-20251103-A1B2C3/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "confirmed",
+  "notes": "Manual confirmation by admin"
+}
+
+### ============================================
+### GUEST MANAGEMENT
+### ============================================
+
+### 1. Get All Guests
+GET {{baseUrl}}/guests
+Authorization: Bearer {{token}}
+
+### 2. Get Guest Statistics
+GET {{baseUrl}}/guests/statistics
+Authorization: Bearer {{token}}
+
+### 3. Cleanup Expired Guests
+POST {{baseUrl}}/guests/cleanup-expired
+Authorization: Bearer {{token}}
+
+### 4. Delete Guest
+DELETE {{baseUrl}}/guests/guest_abc123
+Authorization: Bearer {{token}}
+
+### ============================================
+### SECURITY MONITORING
+### ============================================
+
+### 1. Get Security Status
+GET {{baseUrl}}/security/status
+Authorization: Bearer {{token}}
+
+### 2. Get Security Metrics
+GET {{baseUrl}}/security/metrics
+Authorization: Bearer {{token}}
+
+### 3. Get System Health
+GET {{baseUrl}}/security/health
+Authorization: Bearer {{token}}
+
+### 4. Test Security Alert (Dev Only)
+POST {{baseUrl}}/security/test-alert
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "alertType": "sql-injection"
+}
+
+### ============================================
+### COMPLETE CONTENT CREATION WORKFLOW
+### ============================================
+
+### Step 1: Create Travel Pack (EN)
+POST {{baseUrl}}/travel-packs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "New Adventure Pack",
+  "locale": "en",
+  "localeGroupId": "pack_group_workflow",
+  ...
+}
+
+### Step 2: Create Travel Pack (FR)
+POST {{baseUrl}}/travel-packs
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Forfait Aventure",
+  "locale": "fr",
+  "localeGroupId": "pack_group_workflow",
+  ...
+}
+
+### Step 3: Create Activity
+POST {{baseUrl}}/activities
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "New Activity",
+  "locale": "en",
+  "localeGroupId": "activity_group_workflow",
+  ...
+}
+
+### Step 4: Create Car
+POST {{baseUrl}}/cars
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "New Car",
+  "locale": "en",
+  "localeGroupId": "car_group_workflow",
+  ...
+}
+
+### Step 5: Create Pack Relation
+POST {{baseUrl}}/pack-relations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "travelPackLocaleGroupId": "pack_group_workflow",
+  "availableActivities": [
+    {
+      "localeGroupId": "activity_group_workflow",
+      "isOptional": true
+    }
+  ],
+  "availableCars": [
+    {
+      "localeGroupId": "car_group_workflow"
+    }
+  ]
+}

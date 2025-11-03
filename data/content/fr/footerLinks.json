@@ -1,0 +1,7 @@
+{
+  "support": [{ "label": "Contact", "href": "/contact" }],
+  "legal": [
+    { "label": "Conditions Générales", "href": "/terms" },
+    { "label": "Confidentialité", "href": "/privacy" }
+  ]
+}

@@ -1,0 +1,131 @@
+[
+  {
+    "id": "pack-1",
+    "slug": "rent-a-car-and-go",
+    "localeGroupId": "pack-1",
+    "coverImage": "https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=800&h=600&fit=crop",
+    "features": [
+      "4x4_rental_camping",
+      "accommodation_upgrade",
+      "flexible_route",
+      "family_friendly"
+    ],
+    "duration": 7,
+    "basePrice": 90,
+    "currency": "USD",
+    "locales": {
+      "en": {
+        "name": "Rent a Car & Go",
+        "description": "Live the adventure at your own pace with a fully equipped 4x4. Travel freely, camp under the stars, or stay in yurts and hotels.",
+        "ctaLabel": "See Details",
+        "metadata": {
+          "title": "Rent a Car & Go | Explore Kyrgyzstan",
+          "description": "Enjoy Kyrgyzstan at your own pace with a 4x4 and camping gear.",
+          "path": "/travel-packs/pack-1",
+          "image": "https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=1200&h=630&fit=crop",
+          "alt": "4x4 car rental adventure in Kyrgyzstan"
+        }
+      },
+      "fr": {
+        "name": "Louez une Voiture & Partez",
+        "description": "Vivez l'aventure à votre rythme avec un 4x4 entièrement équipé. Voyagez librement, campez sous les étoiles ou séjournez dans des yourtes et des hôtels.",
+        "ctaLabel": "Voir les détails",
+        "metadata": {
+          "title": "Louez une Voiture & Partez | Explorez le Kirghizistan",
+          "description": "Profitez du Kirghizistan à votre rythme avec un 4x4 et du matériel de camping.",
+          "path": "/travel-packs/pack-1",
+          "image": "https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=1200&h=630&fit=crop",
+          "alt": "Aventure en 4x4 au Kirghizistan"
+        }
+      }
+    },
+    "status": "published",
+    "availability": true
+  },
+  {
+    "id": "pack-2",
+    "slug": "let-an-expert-guide-you",
+    "localeGroupId": "pack-2",
+    "coverImage": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=600&fit=crop",
+    "features": [
+      "driver_guide_included",
+      "local_knowledge",
+      "wild_cooking",
+      "comfortable_safe"
+    ],
+    "duration": 7,
+    "basePrice": 120,
+    "currency": "USD",
+    "locales": {
+      "en": {
+        "name": "Let an Expert Guide You",
+        "description": "Relax while a local driver-guide takes you through hidden trails, cooks for you, and shares cultural insights.",
+        "ctaLabel": "See Details",
+        "metadata": {
+          "title": "Guided Adventure | Explore Kyrgyzstan",
+          "description": "Discover Kyrgyzstan worry-free with an expert local guide.",
+          "path": "/travel-packs/pack-2",
+          "image": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=630&fit=crop",
+          "alt": "Guided travel experience in Kyrgyzstan"
+        }
+      },
+      "fr": {
+        "name": "Laissez un Expert Vous Guider",
+        "description": "Détendez-vous pendant qu'un chauffeur-guide local vous emmène sur des sentiers cachés, cuisine pour vous et partage sa culture.",
+        "ctaLabel": "Voir les détails",
+        "metadata": {
+          "title": "Aventure Guidée | Explorez le Kirghizistan",
+          "description": "Découvrez le Kirghizistan en toute sérénité avec un guide local expérimenté.",
+          "path": "/travel-packs/pack-2",
+          "image": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=630&fit=crop",
+          "alt": "Voyage guidé au Kirghizistan"
+        }
+      }
+    },
+    "status": "published",
+    "availability": true
+  },
+  {
+    "id": "pack-3",
+    "slug": "join-a-group-adventure",
+    "localeGroupId": "pack-3",
+    "coverImage": "https://images.unsplash.com/photo-1539635278303-d4002c07eae3?w=800&h=600&fit=crop",
+    "features": [
+      "group_15_20",
+      "multi_vehicle",
+      "social_atmosphere",
+      "shared_experiences"
+    ],
+    "duration": 10,
+    "basePrice": 65,
+    "currency": "USD",
+    "locales": {
+      "en": {
+        "name": "Join a Group Adventure",
+        "description": "Share the journey with fellow explorers in a fun and social group setup across Kyrgyzstan.",
+        "ctaLabel": "See Details",
+        "metadata": {
+          "title": "Group Adventure | Explore Kyrgyzstan",
+          "description": "Join a group of 15–20 explorers and share unforgettable moments.",
+          "path": "/travel-packs/pack-3",
+          "image": "https://images.unsplash.com/photo-1539635278303-d4002c07eae3?w=1200&h=630&fit=crop",
+          "alt": "Group travel adventure in Kyrgyzstan"
+        }
+      },
+      "fr": {
+        "name": "Rejoignez une Aventure en Groupe",
+        "description": "Partagez le voyage avec d'autres explorateurs dans une ambiance conviviale à travers le Kirghizistan.",
+        "ctaLabel": "Voir les détails",
+        "metadata": {
+          "title": "Aventure en Groupe | Explorez le Kirghizistan",
+          "description": "Rejoignez un groupe de 15 à 20 explorateurs et partagez des moments inoubliables.",
+          "path": "/travel-packs/pack-3",
+          "image": "https://images.unsplash.com/photo-1539635278303-d4002c07eae3?w=1200&h=630&fit=crop",
+          "alt": "Aventure en groupe au Kirghizistan"
+        }
+      }
+    },
+    "status": "published",
+    "availability": true
+  }
+]

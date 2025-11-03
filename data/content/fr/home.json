@@ -1,0 +1,43 @@
+{
+  "id": "home-page",
+  "hero": {
+    "title": "Explorez le Kirghizistan avec Nomadia Travels",
+    "subtitle": "Découvrez les montagnes, la culture et l’aventure comme jamais auparavant.",
+    "heroImage": "/images/home/hero-home-v2.webp",
+    "ctaText": "Commencez votre voyage",
+    "ctaLink": "/travel-packs"
+  },
+  "sections": [
+    {
+      "id": "services-preview",
+      "heading": "Nos Services",
+      "description": "De la location de voitures aux circuits culturels, nous vous offrons tout ce dont vous avez besoin.",
+      "linkText": "Voir tous les services",
+      "link": "/travel-packs"
+    },
+    {
+      "id": "cars-preview",
+      "heading": "Nos Meilleures Voitures",
+      "description": "Des voitures confortables et abordables pour vos voyages.",
+      "limit": 3,
+      "linkText": "Voir toutes les voitures",
+      "link": "/cars"
+    },
+    {
+      "id": "gallery-preview",
+      "heading": "Galerie de Voyage",
+      "description": "Un aperçu de nos aventures à travers le Kirghizistan.",
+      "limit": 6,
+      "linkText": "Voir toute la galerie",
+      "link": "/gallery"
+    }
+  ],
+
+  "metadata": {
+    "title": "Nomadia Travels | Explorez le Kirghizistan",
+    "description": "Votre porte d’entrée vers les aventures au Kirghizistan — voitures, circuits et expériences culturelles.",
+    "path": "/",
+    "image": "/images/home-og.png",
+    "alt": "Image de la page d’accueil de Nomadia Travels"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "id": "contact-page",
+  "heading": "Contactez-nous",
+  "content": [
+    {
+      "type": "paragraph",
+      "text": "Vous avez des questions sur nos circuits, nos voitures ou nos activités ? Nous sommes là pour vous aider. Envoyez-nous un message et nous vous répondrons dès que possible."
+    }
+  ],
+  "form": {
+    "fields": [
+      {
+        "name": "name",
+        "label": "Votre nom",
+        "type": "text",
+        "required": true
+      },
+      {
+        "name": "email",
+        "label": "Adresse e-mail",
+        "type": "email",
+        "required": true
+      },
+      {
+        "name": "subject",
+        "label": "Sujet",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "message",
+        "label": "Message",
+        "type": "textarea",
+        "required": true
+      }
+    ],
+    "submitText": "Envoyer le message"
+  },
+  "info": {
+    "email": "info@nomadiatravels.com",
+    "phone": "+996 555 123 456",
+    "address": "Bichkek, Kirghizistan",
+    "mapLink": "https://goo.gl/maps/example"
+  },
+  "socials": [
+    { "platform": "Facebook", "url": "https://facebook.com/nomadiatravels" },
+    { "platform": "Instagram", "url": "https://instagram.com/nomadiatravels" },
+    { "platform": "WhatsApp", "url": "https://wa.me/996555123456" }
+  ],
+  "metadata": {
+    "title": "Contactez-nous | Nomadia Travels",
+    "description": "Contactez Nomadia Travels pour toute demande d’information, d’assistance ou de partenariat.",
+    "path": "/contact",
+    "image": "/images/contact-og.png",
+    "alt": "Formulaire de contact et coordonnées de Nomadia Travels"
+  }
+}

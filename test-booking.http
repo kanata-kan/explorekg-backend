@@ -1,0 +1,95 @@
+### Test Booking System
+@baseUrl = http://localhost:4000/api/v1
+@guestId = REPLACE_WITH_GUEST_ID
+@bookingNumber = REPLACE_WITH_BOOKING_NUMBER
+
+### 1. Create Guest First (prerequisite)
+POST {{baseUrl}}/guests
+Content-Type: application/json
+
+{
+  "email": "booking-test@example.com",
+  "fullName": "Booking Test User",
+  "phone": "+201234567890",
+  "locale": "en"
+}
+
+### 2. Create Booking for TravelPack
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "guestId": "{{guestId}}",
+  "itemType": "travel_pack",
+  "itemId": "REPLACE_WITH_TRAVEL_PACK_ID",
+  "numberOfPersons": 2,
+  "startDate": "2025-12-01T10:00:00Z",
+  "endDate": "2025-12-10T18:00:00Z",
+  "locale": "en"
+}
+
+### 3. Create Booking for Activity
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "guestId": "{{guestId}}",
+  "itemType": "activity",
+  "itemId": "REPLACE_WITH_ACTIVITY_ID",
+  "numberOfPersons": 3,
+  "locale": "en"
+}
+
+### 4. Create Booking for Car
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "guestId": "{{guestId}}",
+  "itemType": "car",
+  "itemId": "REPLACE_WITH_CAR_ID",
+  "numberOfDays": 7,
+  "startDate": "2025-12-01T10:00:00Z",
+  "endDate": "2025-12-08T10:00:00Z",
+  "locale": "en"
+}
+
+### 5. Get Booking by Number
+GET {{baseUrl}}/bookings/{{bookingNumber}}
+
+### 6. Get All Bookings for Guest
+GET {{baseUrl}}/bookings/guest/{{guestId}}
+
+### 7. Update Booking Status (Admin)
+PATCH {{baseUrl}}/bookings/{{bookingNumber}}/status
+Content-Type: application/json
+
+{
+  "status": "confirmed"
+}
+
+### 8. Mark Booking as Paid
+POST {{baseUrl}}/bookings/{{bookingNumber}}/payment
+Content-Type: application/json
+
+{
+  "paymentMethod": "credit_card",
+  "paymentTransactionId": "TXN-20251101-12345"
+}
+
+### 9. Cancel Booking
+POST {{baseUrl}}/bookings/{{bookingNumber}}/cancel
+Content-Type: application/json
+
+{
+  "reason": "Changed travel plans"
+}
+
+### 10. Get Booking Statistics
+GET {{baseUrl}}/bookings/statistics
+
+### 11. Get All Active Bookings
+GET {{baseUrl}}/bookings
+
+### 12. Cleanup Expired Bookings
+POST {{baseUrl}}/bookings/cleanup-expired

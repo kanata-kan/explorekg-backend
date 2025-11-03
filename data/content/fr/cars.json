@@ -1,0 +1,166 @@
+[
+  {
+    "localeGroupId": "car-1",
+    "locale": "fr",
+    "name": "BMW X7 (2024)",
+    "description": "Un SUV de luxe alliant élégance, technologie de pointe et puissance — conçu pour les voyageurs souhaitant découvrir le Kirghizistan avec style et confort. Le BMW X7 offre la douceur d'un véhicule haut de gamme tout en restant parfaitement adapté à la diversité des paysages kirghiz.",
+    "coverImage": "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&h=600&fit=crop",
+    "pricing": {
+      "amount": 180,
+      "currency": "USD",
+      "unit": "jour"
+    },
+    "specs": {
+      "seats": "7",
+      "transmission": "Automatique",
+      "drive": "4x4 xDrive",
+      "luggage": "Grand",
+      "fuel": "Essence"
+    },
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "BMW X7 (2024) — Location de SUV de luxe au Kirghizistan",
+      "description": "Découvrez le Kirghizistan avec élégance et puissance grâce au BMW X7 2024 — un SUV de luxe alliant confort et aventure.",
+      "path": "/cars/car-1",
+      "image": "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&h=600&fit=crop",
+      "alt": "SUV BMW X7 2024 de luxe disponible à la location"
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop"
+    ]
+  },
+  {
+    "localeGroupId": "car-2",
+    "locale": "fr",
+    "name": "Mercedes-Benz Sprinter Minibus",
+    "description": "Un minibus spacieux et fiable, parfait pour les aventures en groupe à travers le Kirghizistan. Reconnu pour sa durabilité, sa capacité et son confort sur les longs trajets — idéal pour vivre des expériences partagées.",
+    "coverImage": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=600&fit=crop",
+    "pricing": {
+      "amount": 140,
+      "currency": "USD",
+      "unit": "jour"
+    },
+    "specs": {
+      "seats": "15–20",
+      "transmission": "Manuelle",
+      "drive": "2WD Diesel",
+      "luggage": "Très grand",
+      "fuel": "Diesel"
+    },
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Mercedes-Benz Sprinter — Location de minibus de groupe au Kirghizistan",
+      "description": "Voyagez ensemble à travers le Kirghizistan avec le fiable Mercedes-Benz Sprinter Minibus — idéal pour les circuits en groupe.",
+      "path": "/cars/car-2",
+      "image": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=600&fit=crop",
+      "alt": "Minibus Mercedes-Benz Sprinter disponible pour la location de groupe"
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800&h=600&fit=crop"
+    ]
+  },
+  {
+    "localeGroupId": "car-3",
+    "locale": "fr",
+    "name": "Jeep Wrangler (2022)",
+    "description": "Icône de liberté et d'aventure, la Jeep Wrangler est faite pour les voyageurs souhaitant vivre la nature kirghize de près. Agile, puissante et authentique — parfaite pour l'exploration tout-terrain.",
+    "coverImage": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=600&fit=crop",
+    "pricing": {
+      "amount": 120,
+      "currency": "USD",
+      "unit": "jour"
+    },
+    "specs": {
+      "seats": "4",
+      "transmission": "Automatique",
+      "drive": "4x4",
+      "luggage": "Moyen",
+      "fuel": "Essence"
+    },
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Jeep Wrangler (2022) — Location tout-terrain au Kirghizistan",
+      "description": "Explorez les pistes reculées du Kirghizistan avec l'emblématique Jeep Wrangler — un mélange parfait d'adrénaline et d'authenticité.",
+      "path": "/cars/car-3",
+      "image": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=600&fit=crop",
+      "alt": "Jeep Wrangler 2022 SUV tout-terrain disponible à la location"
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop"
+    ]
+  },
+  {
+    "localeGroupId": "car-4",
+    "locale": "fr",
+    "name": "Toyota Land Cruiser",
+    "description": "Le légendaire 4x4 conçu pour la force, la fiabilité et l'aventure — le Toyota Land Cruiser reste le compagnon idéal pour explorer les terrains les plus exigeants du Kirghizistan. Fiable, robuste et doté d'une technologie avancée.",
+    "coverImage": "https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800&h=600&fit=crop",
+    "pricing": {
+      "amount": 100,
+      "currency": "USD",
+      "unit": "jour"
+    },
+    "specs": {
+      "seats": "5–7",
+      "transmission": "Automatique",
+      "drive": "4x4",
+      "luggage": "Grand",
+      "fuel": "Diesel"
+    },
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Toyota Land Cruiser — SUV 4x4 fiable pour les aventures au Kirghizistan",
+      "description": "Affrontez les paysages sauvages du Kirghizistan avec le mythique Toyota Land Cruiser — fiabilité et performance incomparables.",
+      "path": "/cars/car-4",
+      "image": "https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800&h=600&fit=crop",
+      "alt": "Toyota Land Cruiser disponible pour les locations d'aventure"
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop"
+    ]
+  },
+  {
+    "localeGroupId": "car-5",
+    "locale": "fr",
+    "name": "Toyota Sequoia (2009)",
+    "description": "Un SUV puissant et spacieux, parfait pour les familles ou les groupes recherchant à la fois confort et robustesse sur les routes kirghizes. La Toyota Sequoia assure sécurité et bien-être à chaque voyage.",
+    "coverImage": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop",
+    "pricing": {
+      "amount": 90,
+      "currency": "USD",
+      "unit": "jour"
+    },
+    "specs": {
+      "seats": "7",
+      "transmission": "Automatique",
+      "drive": "4x4",
+      "luggage": "Grand",
+      "fuel": "Essence"
+    },
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Toyota Sequoia (2009) — Location de SUV familial au Kirghizistan",
+      "description": "Spacieuse et solide, la Toyota Sequoia est idéale pour les aventures familiales confortables et sûres à travers le Kirghizistan.",
+      "path": "/cars/car-5",
+      "image": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop",
+      "alt": "SUV familial Toyota Sequoia disponible à la location"
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&h=600&fit=crop"
+    ]
+  }
+]

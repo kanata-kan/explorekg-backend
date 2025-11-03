@@ -1,0 +1,119 @@
+[
+  {
+    "id": "gallery-1",
+    "title": "Lac Issyk-Kul",
+    "image": "/images/gallery/issyk-kul.jpg",
+    "caption": "Paradis Bleu",
+    "metadata": {
+      "title": "Lac Issyk-Kul | Galerie",
+      "description": "Vue à couper le souffle du lac Issyk-Kul au Kirghizistan.",
+      "path": "/gallery/gallery-1",
+      "image": "/images/gallery/issyk-kul.jpg",
+      "alt": "Vue panoramique du lac Issyk-Kul"
+    }
+  },
+  {
+    "id": "gallery-2",
+    "title": "Chasseur à l’aigle",
+    "image": "/images/gallery/eagle-hunter.jpg",
+    "caption": "Tradition Nomade",
+    "metadata": {
+      "title": "Chasseur à l’aigle | Galerie",
+      "description": "Expérience traditionnelle de chasse à l’aigle au Kirghizistan.",
+      "path": "/gallery/gallery-2",
+      "image": "/images/gallery/eagle-hunter.jpg",
+      "alt": "Chasseur kirghize avec son aigle"
+    }
+  },
+  {
+    "id": "gallery-3",
+    "title": "Yourte à Song-Kul",
+    "image": "/images/gallery/song-kul-yurt.jpg",
+    "caption": "Vie Nomade",
+    "metadata": {
+      "title": "Yourte à Song-Kul | Galerie",
+      "description": "Expérience authentique de yourte au bord du lac Song-Kul.",
+      "path": "/gallery/gallery-3",
+      "image": "/images/gallery/song-kul-yurt.jpg",
+      "alt": "Yourte sur les plaines du lac Song-Kul"
+    }
+  },
+  {
+    "id": "gallery-4",
+    "title": "Cascade de Shaar",
+    "image": "/images/gallery/shaar-waterfall.jpg",
+    "caption": "Puissance de la nature",
+    "metadata": {
+      "title": "Cascade de Shaar | Galerie",
+      "description": "L’une des plus hautes cascades d’Asie centrale.",
+      "path": "/gallery/gallery-4",
+      "image": "/images/gallery/shaar-waterfall.jpg",
+      "alt": "Cascade de Shaar au Kirghizistan"
+    }
+  },
+  {
+    "id": "gallery-5",
+    "title": "Monts Tian Shan",
+    "image": "/images/gallery/tian-shan.jpg",
+    "caption": "Montagnes Célestes",
+    "metadata": {
+      "title": "Monts Tian Shan | Galerie",
+      "description": "Sommets enneigés de la chaîne de montagnes Tian Shan.",
+      "path": "/gallery/gallery-5",
+      "image": "/images/gallery/tian-shan.jpg",
+      "alt": "Montagnes enneigées du Tian Shan au Kirghizistan"
+    }
+  },
+  {
+    "id": "gallery-6",
+    "title": "Bazar d’Och",
+    "image": "/images/gallery/osh-bazaar.jpg",
+    "caption": "Couleurs de la culture",
+    "metadata": {
+      "title": "Bazar d’Och | Galerie",
+      "description": "Marché local vibrant à Bichkek, plein de vie et de couleurs.",
+      "path": "/gallery/gallery-6",
+      "image": "/images/gallery/osh-bazaar.jpg",
+      "alt": "Bazar coloré d’Och à Bichkek"
+    }
+  },
+  {
+    "id": "gallery-7",
+    "title": "Forêt de noyers d’Arslanbob",
+    "image": "/images/gallery/arslanbob.jpg",
+    "caption": "Cadeau de la nature",
+    "metadata": {
+      "title": "Forêt d’Arslanbob | Galerie",
+      "description": "La plus grande forêt naturelle de noyers au monde.",
+      "path": "/gallery/gallery-7",
+      "image": "/images/gallery/arslanbob.jpg",
+      "alt": "Forêt de noyers d’Arslanbob au Kirghizistan"
+    }
+  },
+  {
+    "id": "gallery-8",
+    "title": "Parc national d’Ala Archa",
+    "image": "/images/gallery/ala-archa.jpg",
+    "caption": "Paradis des randonneurs",
+    "metadata": {
+      "title": "Ala Archa | Galerie",
+      "description": "Superbe parc alpin près de Bichkek, idéal pour le trekking.",
+      "path": "/gallery/gallery-8",
+      "image": "/images/gallery/ala-archa.jpg",
+      "alt": "Vue panoramique du parc national d’Ala Archa"
+    }
+  },
+  {
+    "id": "gallery-9",
+    "title": "Tour de Burana",
+    "image": "/images/gallery/burana-tower.jpg",
+    "caption": "Héritage ancien",
+    "metadata": {
+      "title": "Tour de Burana | Galerie",
+      "description": "Minaret historique de l’ancienne ville de Balasagun sur la Route de la Soie.",
+      "path": "/gallery/gallery-9",
+      "image": "/images/gallery/burana-tower.jpg",
+      "alt": "Tour de Burana près de Tokmok au Kirghizistan"
+    }
+  }
+]

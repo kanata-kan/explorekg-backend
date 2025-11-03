@@ -1,0 +1,362 @@
+### ============================================
+### ExploreKG User API Examples
+### Base URL: http://localhost:5000/api/v1
+### ============================================
+
+@baseUrl = http://localhost:5000/api/v1
+@sessionId = guest_abc123def456
+
+### ============================================
+### HEALTH CHECK
+### ============================================
+
+### Health Check
+GET {{baseUrl}}/health
+
+### ============================================
+### GUEST MANAGEMENT
+### ============================================
+
+### 1. Create Guest Session
+POST {{baseUrl}}/guests
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "email": "john.doe@example.com",
+  "phoneNumber": "+996555123456"
+}
+
+### 2. Get Guest by Session ID
+GET {{baseUrl}}/guests/{{sessionId}}
+Cookie: sessionId={{sessionId}}
+
+### 3. Get Guest by Email
+GET {{baseUrl}}/guests/email/john.doe@example.com
+
+### 4. Update Guest Information
+PATCH {{baseUrl}}/guests/{{sessionId}}
+Cookie: sessionId={{sessionId}}
+Content-Type: application/json
+
+{
+  "fullName": "John Michael Doe",
+  "phoneNumber": "+996555987654"
+}
+
+### 5. Extend Guest Session
+PATCH {{baseUrl}}/guests/{{sessionId}}/extend
+Cookie: sessionId={{sessionId}}
+Content-Type: application/json
+
+{
+  "days": 7
+}
+
+### 6. Link Guest to User Account
+POST {{baseUrl}}/guests/{{sessionId}}/link-user
+Cookie: sessionId={{sessionId}}
+Content-Type: application/json
+
+{
+  "userId": "user_123abc"
+}
+
+### ============================================
+### TRAVEL PACKS
+### ============================================
+
+### 1. Get All Travel Packs
+GET {{baseUrl}}/travel-packs?locale=en&page=1&limit=10&isAvailable=true
+
+### 2. Get Travel Pack by ID
+GET {{baseUrl}}/travel-packs/pack_123abc
+
+### 3. Get Travel Pack by Slug
+GET {{baseUrl}}/travel-packs/kyrgyzstan-adventure-pack
+
+### 4. Get Detailed Travel Pack
+GET {{baseUrl}}/travel-packs/pack_123abc/detailed?step=full&locale=en
+
+### 5. Filter Travel Packs by Price
+GET {{baseUrl}}/travel-packs?minPrice=500&maxPrice=1000&locale=en
+
+### 6. Filter Travel Packs by Duration
+GET {{baseUrl}}/travel-packs?minDuration=5&maxDuration=10&locale=en
+
+### 7. Sort Travel Packs by Price
+GET {{baseUrl}}/travel-packs?sortBy=price&sortOrder=asc&locale=en
+
+### ============================================
+### ACTIVITIES
+### ============================================
+
+### 1. Get All Activities
+GET {{baseUrl}}/activities?locale=en&page=1&limit=10
+
+### 2. Get Available Activities Only
+GET {{baseUrl}}/activities/available?locale=en
+
+### 3. Get Activity by ID
+GET {{baseUrl}}/activities/activity_001
+
+### 4. Get Activity by Slug
+GET {{baseUrl}}/activities/issyk-kul-lake-tour
+
+### 5. Filter Activities by Difficulty
+GET {{baseUrl}}/activities?difficulty=easy&locale=en
+
+### 6. Filter Activities by Price
+GET {{baseUrl}}/activities?minPrice=50&maxPrice=200&locale=en
+
+### ============================================
+### CARS
+### ============================================
+
+### 1. Get All Cars
+GET {{baseUrl}}/cars?locale=en&page=1&limit=10
+
+### 2. Get Available Cars Only
+GET {{baseUrl}}/cars/available?locale=en
+
+### 3. Get Car by ID
+GET {{baseUrl}}/cars/car_001
+
+### 4. Get Car by Slug
+GET {{baseUrl}}/cars/toyota-land-cruiser
+
+### 5. Filter Cars by Type
+GET {{baseUrl}}/cars?type=suv&locale=en
+
+### 6. Filter Cars by Capacity
+GET {{baseUrl}}/cars?minCapacity=5&locale=en
+
+### 7. Filter Cars by Transmission
+GET {{baseUrl}}/cars?transmission=automatic&locale=en
+
+### ============================================
+### PACK RELATIONS
+### ============================================
+
+### 1. Get Pack Relation by Pack ID
+GET {{baseUrl}}/pack-relations/pack_group_123
+
+### 2. Calculate Price for Custom Selection
+POST {{baseUrl}}/pack-relations/calculate-price
+Content-Type: application/json
+
+{
+  "travelPackLocaleGroupId": "pack_group_123",
+  "numberOfPersons": 2,
+  "selectedActivities": ["activity_group_001", "activity_group_002"],
+  "selectedCarId": "car_group_001",
+  "locale": "en"
+}
+
+### 3. Calculate Price (Minimal Selection)
+POST {{baseUrl}}/pack-relations/calculate-price
+Content-Type: application/json
+
+{
+  "travelPackLocaleGroupId": "pack_group_123",
+  "numberOfPersons": 1,
+  "selectedActivities": [],
+  "selectedCarId": "car_group_001",
+  "locale": "en"
+}
+
+### ============================================
+### BOOKINGS
+### ============================================
+
+### 1. Create Booking
+POST {{baseUrl}}/bookings
+Cookie: sessionId={{sessionId}}
+Content-Type: application/json
+
+{
+  "guestId": "{{sessionId}}",
+  "travelPackLocaleGroupId": "pack_group_123",
+  "numberOfPersons": 2,
+  "selectedActivities": ["activity_group_001"],
+  "selectedCarId": "car_group_001",
+  "totalPrice": 2990,
+  "startDate": "2025-12-01",
+  "endDate": "2025-12-08",
+  "notes": "Prefer early morning pickup"
+}
+
+### 2. Get Booking by Booking Number
+GET {{baseUrl}}/bookings/BK-20251103-A1B2C3
+Cookie: sessionId={{sessionId}}
+
+### 3. Get All Bookings for Guest
+GET {{baseUrl}}/bookings/guest/{{sessionId}}
+Cookie: sessionId={{sessionId}}
+
+### 4. Process Payment
+POST {{baseUrl}}/bookings/BK-20251103-A1B2C3/payment
+Cookie: sessionId={{sessionId}}
+Content-Type: application/json
+
+{
+  "paymentMethod": "credit_card",
+  "transactionId": "TXN_stripe_123456789",
+  "notes": "Paid via Stripe"
+}
+
+### 5. Cancel Booking
+POST {{baseUrl}}/bookings/BK-20251103-A1B2C3/cancel
+Cookie: sessionId={{sessionId}}
+Content-Type: application/json
+
+{
+  "reason": "Changed travel plans"
+}
+
+### ============================================
+### COMPLETE BOOKING FLOW EXAMPLE
+### ============================================
+
+### Step 1: Create Guest
+POST {{baseUrl}}/guests
+Content-Type: application/json
+
+{
+  "fullName": "Jane Smith",
+  "email": "jane.smith@example.com",
+  "phoneNumber": "+996555111222"
+}
+
+### Step 2: Browse Travel Packs
+GET {{baseUrl}}/travel-packs?locale=en&isAvailable=true
+
+### Step 3: View Pack Details
+GET {{baseUrl}}/travel-packs/pack_123abc/detailed?step=full&locale=en
+
+### Step 4: Calculate Price
+POST {{baseUrl}}/pack-relations/calculate-price
+Content-Type: application/json
+
+{
+  "travelPackLocaleGroupId": "pack_group_123",
+  "numberOfPersons": 2,
+  "selectedActivities": ["activity_group_001"],
+  "selectedCarId": "car_group_001",
+  "locale": "en"
+}
+
+### Step 5: Create Booking
+# (Use sessionId from Step 1 response)
+POST {{baseUrl}}/bookings
+Cookie: sessionId=guest_from_step1
+Content-Type: application/json
+
+{
+  "guestId": "guest_from_step1",
+  "travelPackLocaleGroupId": "pack_group_123",
+  "numberOfPersons": 2,
+  "selectedActivities": ["activity_group_001"],
+  "selectedCarId": "car_group_001",
+  "totalPrice": 2990,
+  "startDate": "2025-12-01",
+  "endDate": "2025-12-08"
+}
+
+### Step 6: Process Payment
+# (Use bookingNumber from Step 5 response)
+POST {{baseUrl}}/bookings/BK-XXXXX-XXXXX/payment
+Cookie: sessionId=guest_from_step1
+Content-Type: application/json
+
+{
+  "paymentMethod": "credit_card",
+  "transactionId": "TXN_123456789"
+}
+
+### Step 7: View Booking Confirmation
+GET {{baseUrl}}/bookings/BK-XXXXX-XXXXX
+Cookie: sessionId=guest_from_step1
+
+### ============================================
+### ERROR SCENARIOS
+### ============================================
+
+### Test: Create Guest with Invalid Email
+POST {{baseUrl}}/guests
+Content-Type: application/json
+
+{
+  "fullName": "Test User",
+  "email": "invalid-email",
+  "phoneNumber": "+996555000000"
+}
+
+### Test: Access Another Guest's Data (Ownership Validation)
+GET {{baseUrl}}/guests/guest_another_user
+Cookie: sessionId={{sessionId}}
+
+### Test: Create Booking Without Session
+POST {{baseUrl}}/bookings
+Content-Type: application/json
+
+{
+  "guestId": "guest_abc123",
+  "travelPackLocaleGroupId": "pack_group_123",
+  "numberOfPersons": 2,
+  "totalPrice": 2990
+}
+
+### Test: Calculate Price with Invalid Pack
+POST {{baseUrl}}/pack-relations/calculate-price
+Content-Type: application/json
+
+{
+  "travelPackLocaleGroupId": "invalid_pack_id",
+  "numberOfPersons": 2,
+  "selectedActivities": [],
+  "selectedCarId": "car_group_001",
+  "locale": "en"
+}
+
+### ============================================
+### LOCALIZATION EXAMPLES
+### ============================================
+
+### Get Travel Packs in English
+GET {{baseUrl}}/travel-packs?locale=en
+
+### Get Travel Packs in French
+GET {{baseUrl}}/travel-packs?locale=fr
+
+### Get Activity in French
+GET {{baseUrl}}/activities/activity_001?locale=fr
+
+### Get Car in French
+GET {{baseUrl}}/cars/car_001?locale=fr
+
+### ============================================
+### PAGINATION EXAMPLES
+### ============================================
+
+### Get First Page
+GET {{baseUrl}}/travel-packs?page=1&limit=5&locale=en
+
+### Get Second Page
+GET {{baseUrl}}/travel-packs?page=2&limit=5&locale=en
+
+### Get All (Large Limit)
+GET {{baseUrl}}/travel-packs?limit=100&locale=en
+
+### ============================================
+### ADVANCED FILTERING
+### ============================================
+
+### Complex Travel Pack Filter
+GET {{baseUrl}}/travel-packs?locale=en&minPrice=500&maxPrice=1500&minDuration=5&maxDuration=10&isAvailable=true&sortBy=price&sortOrder=asc
+
+### Complex Activity Filter
+GET {{baseUrl}}/activities?locale=en&difficulty=moderate&minPrice=100&maxPrice=300&isAvailable=true
+
+### Complex Car Filter
+GET {{baseUrl}}/cars?locale=en&type=suv&transmission=automatic&minCapacity=5&isAvailable=true

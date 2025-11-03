@@ -1,0 +1,166 @@
+[
+  {
+    "localeGroupId": "car-1",
+    "locale": "en",
+    "name": "BMW X7 (2024)",
+    "description": "A luxury SUV that blends elegance, cutting-edge technology, and power — designed for travelers who want to experience Kyrgyzstan in style and comfort. The BMW X7 offers the smoothness of a high-end vehicle while remaining fully equipped for Kyrgyzstan's diverse landscapes.",
+    "coverImage": "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&h=600&fit=crop",
+    "pricing": {
+      "amount": 180,
+      "currency": "USD",
+      "unit": "day"
+    },
+    "specs": {
+      "seats": "7",
+      "transmission": "Automatic",
+      "drive": "4x4 xDrive",
+      "luggage": "Large",
+      "fuel": "Petrol"
+    },
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "BMW X7 (2024) — Luxury SUV Rental in Kyrgyzstan",
+      "description": "Experience Kyrgyzstan in elegance and power with the 2024 BMW X7 — luxury SUV for comfort and adventure.",
+      "path": "/cars/car-1",
+      "image": "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&h=600&fit=crop",
+      "alt": "BMW X7 2024 luxury SUV available for rental"
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop"
+    ]
+  },
+  {
+    "localeGroupId": "car-2",
+    "locale": "en",
+    "name": "Mercedes-Benz Sprinter Minibus",
+    "description": "A reliable and spacious minibus perfect for group adventures across Kyrgyzstan. Known for its durability, capacity, and comfort during long journeys — ideal for shared travel experiences.",
+    "coverImage": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=600&fit=crop",
+    "pricing": {
+      "amount": 140,
+      "currency": "USD",
+      "unit": "day"
+    },
+    "specs": {
+      "seats": "15–20",
+      "transmission": "Manual",
+      "drive": "2WD Diesel",
+      "luggage": "Extra Large",
+      "fuel": "Diesel"
+    },
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Mercedes-Benz Sprinter — Group Minibus Rental in Kyrgyzstan",
+      "description": "Travel together across Kyrgyzstan with the reliable Mercedes-Benz Sprinter Minibus — perfect for group tours.",
+      "path": "/cars/car-2",
+      "image": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=600&fit=crop",
+      "alt": "Mercedes-Benz Sprinter Minibus available for group rental"
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800&h=600&fit=crop"
+    ]
+  },
+  {
+    "localeGroupId": "car-3",
+    "locale": "en",
+    "name": "Jeep Wrangler (2022)",
+    "description": "An icon of freedom and adventure, the Jeep Wrangler is built for travelers who want to experience Kyrgyzstan's wilderness up close. Agile, powerful, and authentic — perfect for rugged off-road exploration.",
+    "coverImage": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=600&fit=crop",
+    "pricing": {
+      "amount": 120,
+      "currency": "USD",
+      "unit": "day"
+    },
+    "specs": {
+      "seats": "4",
+      "transmission": "Automatic",
+      "drive": "4x4",
+      "luggage": "Medium",
+      "fuel": "Petrol"
+    },
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Jeep Wrangler (2022) — Off-Road Rental in Kyrgyzstan",
+      "description": "Explore Kyrgyzstan's remote trails with the iconic Jeep Wrangler — the perfect blend of thrill and authenticity.",
+      "path": "/cars/car-3",
+      "image": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=600&fit=crop",
+      "alt": "Jeep Wrangler 2022 off-road SUV for rental"
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop"
+    ]
+  },
+  {
+    "localeGroupId": "car-4",
+    "locale": "en",
+    "name": "Toyota Land Cruiser",
+    "description": "The legendary 4x4 built for strength, reliability, and adventure — the Toyota Land Cruiser remains the ultimate companion for exploring Kyrgyzstan's toughest terrains. Trusted worldwide, combining technology and rugged heritage.",
+    "coverImage": "https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800&h=600&fit=crop",
+    "pricing": {
+      "amount": 100,
+      "currency": "USD",
+      "unit": "day"
+    },
+    "specs": {
+      "seats": "5–7",
+      "transmission": "Automatic",
+      "drive": "4x4",
+      "luggage": "Large",
+      "fuel": "Diesel"
+    },
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Toyota Land Cruiser — Reliable 4x4 SUV for Kyrgyzstan Adventures",
+      "description": "Conquer Kyrgyzstan's wild landscapes with the iconic Toyota Land Cruiser — unmatched reliability and performance.",
+      "path": "/cars/car-4",
+      "image": "https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800&h=600&fit=crop",
+      "alt": "Toyota Land Cruiser available for adventure rental"
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop"
+    ]
+  },
+  {
+    "localeGroupId": "car-5",
+    "locale": "en",
+    "name": "Toyota Sequoia (2009)",
+    "description": "A powerful and spacious SUV, perfect for families or groups who value both comfort and strength when exploring Kyrgyzstan's rugged roads. The Toyota Sequoia ensures safety and comfort on every journey.",
+    "coverImage": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop",
+    "pricing": {
+      "amount": 90,
+      "currency": "USD",
+      "unit": "day"
+    },
+    "specs": {
+      "seats": "7",
+      "transmission": "Automatic",
+      "drive": "4x4",
+      "luggage": "Large",
+      "fuel": "Petrol"
+    },
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Toyota Sequoia (2009) — Family SUV Rental in Kyrgyzstan",
+      "description": "Spacious and strong, the Toyota Sequoia is perfect for comfortable and safe family adventures across Kyrgyzstan.",
+      "path": "/cars/car-5",
+      "image": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop",
+      "alt": "Toyota Sequoia family SUV available for rental"
+    },
+    "images": [
+      "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&h=600&fit=crop"
+    ]
+  }
+]

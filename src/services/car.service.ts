@@ -1,0 +1,394 @@
+// src/services/car.service.ts
+import { Car, ICar } from '../models/car.model';
+import { Types } from 'mongoose';
+import { NotFoundError, ValidationError } from '../utils/AppError';
+import { ENV } from '../config/env';
+
+type FindFilters = {
+  locale?: string | null;
+  localeGroupId?: string | null;
+  status?: string | null;
+  availabilityStatus?: string | null;
+  q?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  transmission?: string | null;
+  fuel?: string | null;
+  drive?: string | null;
+  seats?: string | null;
+};
+
+type SortOption =
+  | 'createdAt'
+  | '-createdAt'
+  | 'pricing.amount'
+  | '-pricing.amount'
+  | 'name'
+  | '-name';
+
+/**
+ * Car Service Layer
+ * Business logic for car operations with optimized queries
+ */
+
+/**
+ * Find many cars with filtering, sorting, and pagination
+ */
+export const findMany = async (
+  filters: FindFilters = {},
+  pagination: { page: number; limit: number; sort?: SortOption } = {
+    page: 1,
+    limit: 20,
+  }
+) => {
+  const { page, limit, sort = '-createdAt' } = pagination;
+
+  // Validate pagination limits
+  const validatedLimit = Math.min(Math.max(limit, 1), ENV.MAX_PAGINATION_LIMIT);
+  const validatedPage = Math.max(page, 1);
+  const skip = (validatedPage - 1) * validatedLimit;
+
+  // Build optimized query
+  const query: any = {};
+
+  // Basic filters
+  if (filters.status) query.status = filters.status;
+  if (filters.locale) query.locale = filters.locale;
+  if (filters.localeGroupId) query.localeGroupId = filters.localeGroupId;
+  if (filters.availabilityStatus)
+    query.availabilityStatus = filters.availabilityStatus;
+
+  // Specs filters
+  if (filters.transmission) query['specs.transmission'] = filters.transmission;
+  if (filters.fuel) query['specs.fuel'] = filters.fuel;
+  if (filters.drive) query['specs.drive'] = filters.drive;
+  if (filters.seats) query['specs.seats'] = filters.seats;
+
+  // Price range filtering
+  if (filters.minPrice !== undefined && filters.minPrice !== null) {
+    if (!query['pricing.amount']) query['pricing.amount'] = {};
+    query['pricing.amount'].$gte = filters.minPrice;
+  }
+  if (filters.maxPrice !== undefined && filters.maxPrice !== null) {
+    if (!query['pricing.amount']) query['pricing.amount'] = {};
+    query['pricing.amount'].$lte = filters.maxPrice;
+  }
+
+  // Text search using MongoDB text index (much faster than regex)
+  if (filters.q) {
+    const searchQuery = filters.q.trim();
+    if (searchQuery) {
+      query.$text = {
+        $search: searchQuery,
+        $caseSensitive: false,
+        $diacriticSensitive: false,
+      };
+    }
+  }
+
+  // Build sort object
+  const sortObj: any = {};
+  if (sort.startsWith('-')) {
+    sortObj[sort.substring(1)] = -1;
+  } else {
+    sortObj[sort] = 1;
+  }
+
+  // Add score sorting for text search
+  if (filters.q) {
+    sortObj.score = { $meta: 'textScore' };
+  }
+
+  const [items, total] = await Promise.all([
+    Car.find(query)
+      .sort(sortObj)
+      .skip(skip)
+      .limit(validatedLimit)
+      .lean()
+      .exec(),
+    Car.countDocuments(query).exec(),
+  ]);
+
+  return {
+    items,
+    pagination: {
+      page: validatedPage,
+      limit: validatedLimit,
+      total,
+      pages: Math.ceil(total / validatedLimit),
+      hasNext: validatedPage < Math.ceil(total / validatedLimit),
+      hasPrev: validatedPage > 1,
+    },
+    filters: {
+      ...filters,
+      sort,
+    },
+  };
+};
+
+/**
+ * Find car by ID or slug
+ */
+export const findById = async (id: string): Promise<ICar> => {
+  // Check if ID is a valid MongoDB ObjectId
+  const isValidObjectId = Types.ObjectId.isValid(id);
+
+  let car: ICar | null = null;
+
+  if (isValidObjectId) {
+    // Try to find by ObjectId
+    car = await Car.findById(id).exec();
+  }
+
+  // If not found by ObjectId, try to find by slug (metadata.path)
+  if (!car) {
+    const pathQuery = `/cars/${id}`;
+    car = await Car.findOne({ 'metadata.path': pathQuery }).exec();
+  }
+
+  if (!car) {
+    throw new NotFoundError('Car not found');
+  }
+
+  return car;
+};
+
+/**
+ * Find all language versions of a car by localeGroupId
+ * Returns all translations (EN, FR) for the same car
+ */
+export const findByLocaleGroupId = async (
+  localeGroupId: string
+): Promise<ICar[]> => {
+  const cars = await Car.find({
+    localeGroupId,
+    status: 'active',
+  })
+    .sort({ locale: 1 })
+    .exec();
+
+  return cars;
+};
+
+/**
+ * Create a new car
+ */
+export const create = async (carData: Partial<ICar>): Promise<ICar> => {
+  // Validate required fields
+  if (!carData.name || !carData.description) {
+    throw new ValidationError('Name and description are required');
+  }
+
+  if (!carData.pricing || !carData.pricing.amount) {
+    throw new ValidationError('Pricing information is required');
+  }
+
+  if (!carData.locale) {
+    throw new ValidationError('Locale is required');
+  }
+
+  // Create new car document
+  const car = new Car(carData);
+  await car.save();
+
+  return car;
+};
+
+/**
+ * Update an existing car
+ */
+export const update = async (
+  id: string,
+  updateData: Partial<ICar>
+): Promise<ICar> => {
+  // Check if ID is valid
+  if (!Types.ObjectId.isValid(id)) {
+    throw new ValidationError('Invalid car ID format');
+  }
+
+  // Find and update car
+  const car = await Car.findByIdAndUpdate(id, updateData, {
+    new: true,
+    runValidators: true,
+  }).exec();
+
+  if (!car) {
+    throw new NotFoundError('Car not found');
+  }
+
+  return car;
+};
+
+/**
+ * Delete a car (soft delete by setting status to inactive)
+ */
+export const remove = async (id: string): Promise<void> => {
+  // Check if ID is valid
+  if (!Types.ObjectId.isValid(id)) {
+    throw new ValidationError('Invalid car ID format');
+  }
+
+  // Soft delete by changing status to inactive
+  const car = await Car.findByIdAndUpdate(
+    id,
+    { status: 'inactive' },
+    { new: true }
+  ).exec();
+
+  if (!car) {
+    throw new NotFoundError('Car not found');
+  }
+};
+
+/**
+ * Get available cars for booking
+ */
+export const findAvailable = async (locale?: 'en' | 'fr') => {
+  const query: any = {
+    status: 'active',
+    availabilityStatus: 'available',
+  };
+
+  if (locale) {
+    query.locale = locale;
+  }
+
+  return await Car.find(query).lean().exec();
+};
+
+/**
+ * Get cars by locale
+ */
+export const findByLocale = async (locale: 'en' | 'fr') => {
+  return await Car.find({
+    locale,
+    status: 'active',
+  })
+    .lean()
+    .exec();
+};
+
+/**
+ * Get statistics about cars
+ */
+export const getStatistics = async () => {
+  const [
+    total,
+    active,
+    inactive,
+    maintenance,
+    available,
+    reserved,
+    unavailable,
+    priceStats,
+  ] = await Promise.all([
+    Car.countDocuments({}),
+    Car.countDocuments({ status: 'active' }),
+    Car.countDocuments({ status: 'inactive' }),
+    Car.countDocuments({ status: 'maintenance' }),
+    Car.countDocuments({ availabilityStatus: 'available' }),
+    Car.countDocuments({ availabilityStatus: 'reserved' }),
+    Car.countDocuments({ availabilityStatus: 'unavailable' }),
+    Car.aggregate([
+      {
+        $group: {
+          _id: null,
+          averagePrice: { $avg: '$pricing.amount' },
+          minPrice: { $min: '$pricing.amount' },
+          maxPrice: { $max: '$pricing.amount' },
+        },
+      },
+    ]),
+  ]);
+
+  return {
+    total,
+    byStatus: {
+      active,
+      inactive,
+      maintenance,
+    },
+    byAvailability: {
+      available,
+      reserved,
+      unavailable,
+    },
+    pricing: priceStats[0] || {
+      averagePrice: 0,
+      minPrice: 0,
+      maxPrice: 0,
+    },
+  };
+};
+
+/**
+ * Update car availability status
+ */
+export const updateAvailability = async (
+  id: string,
+  availabilityStatus: 'available' | 'reserved' | 'unavailable'
+): Promise<ICar> => {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new ValidationError('Invalid car ID format');
+  }
+
+  const car = await Car.findByIdAndUpdate(
+    id,
+    { availabilityStatus },
+    { new: true, runValidators: true }
+  ).exec();
+
+  if (!car) {
+    throw new NotFoundError('Car not found');
+  }
+
+  return car;
+};
+
+/**
+ * Associate car with travel packs
+ */
+export const associateWithPacks = async (
+  carId: string,
+  packIds: string[]
+): Promise<ICar> => {
+  if (!Types.ObjectId.isValid(carId)) {
+    throw new ValidationError('Invalid car ID format');
+  }
+
+  // Validate all pack IDs
+  const validPackIds = packIds.filter(id => Types.ObjectId.isValid(id));
+  if (validPackIds.length !== packIds.length) {
+    throw new ValidationError('One or more pack IDs are invalid');
+  }
+
+  const car = await Car.findByIdAndUpdate(
+    carId,
+    {
+      $addToSet: {
+        packIds: { $each: validPackIds.map(id => new Types.ObjectId(id)) },
+      },
+    },
+    { new: true }
+  ).exec();
+
+  if (!car) {
+    throw new NotFoundError('Car not found');
+  }
+
+  return car;
+};
+
+// Export all service functions
+export const CarService = {
+  findMany,
+  findById,
+  create,
+  update,
+  remove,
+  findAvailable,
+  findByLocale,
+  getStatistics,
+  updateAvailability,
+  associateWithPacks,
+};

@@ -1,0 +1,127 @@
+[
+  {
+    "localeGroupId": "activity-1",
+    "locale": "en",
+    "name": "Authentic Kyrgyz Beshbarmak Cooking Class",
+    "description": "Discover Kyrgyzstan's most iconic dish — Beshbarmak, meaning Five Fingers — in an immersive cooking experience that blends history, tradition, and flavor.",
+    "coverImage": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&h=600&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=600&fit=crop"
+    ],
+    "duration": "1.5 hours",
+    "location": "Naryn Museum or local guest house",
+    "groupSize": "Small and intimate (ideal for families or friends)",
+    "price": 35,
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Authentic Kyrgyz Beshbarmak Cooking Class",
+      "description": "Cook and share Beshbarmak — Kyrgyzstan's national dish — in an authentic, cultural setting.",
+      "path": "/activities/activity-1",
+      "image": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&h=600&fit=crop",
+      "alt": "Guests learning to cook Beshbarmak in Kyrgyzstan"
+    }
+  },
+  {
+    "localeGroupId": "activity-2",
+    "locale": "en",
+    "name": "Eagle Hunting Show – With a World Champion",
+    "description": "Witness one of Kyrgyzstan's most breathtaking traditions: the ancient art of eagle hunting, performed by a 3-time champion of the World Nomad Games.",
+    "coverImage": "https://images.unsplash.com/photo-1551731409-43eb3e517a1a?w=800&h=600&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1551731409-43eb3e517a1a?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop"
+    ],
+    "duration": "1–2 hours",
+    "location": "Alysh village, near the Salkyn Tor mountains",
+    "groupSize": "Any",
+    "price": 50,
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Eagle Hunting Show – With a World Champion",
+      "description": "See a live eagle hunting performance by a 3-time Nomad Games champion.",
+      "path": "/activities/activity-2",
+      "image": "https://images.unsplash.com/photo-1551731409-43eb3e517a1a?w=800&h=600&fit=crop",
+      "alt": "Eagle hunter performing in Kyrgyz mountains"
+    }
+  },
+  {
+    "localeGroupId": "activity-3",
+    "locale": "en",
+    "name": "8-Day Horseback & Cultural Adventure – Naryn Region",
+    "description": "Discover Kyrgyzstan's untouched heartland on an unforgettable 8-day journey through mountains, villages, and Silk Road landmarks.",
+    "coverImage": "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800&h=600&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop"
+    ],
+    "duration": "8 days / 7 nights",
+    "location": "Naryn Region (multiple villages and landmarks)",
+    "groupSize": "2–8 participants",
+    "price": 850,
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "8-Day Horse Trekking Tour – Naryn Region",
+      "description": "Ride through mountains, villages, and Silk Road ruins on an 8-day horse adventure.",
+      "path": "/activities/activity-3",
+      "image": "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=800&h=600&fit=crop",
+      "alt": "Horse trekking through Kyrgyz mountain landscapes"
+    }
+  },
+  {
+    "localeGroupId": "activity-4",
+    "locale": "en",
+    "name": "Shaar Waterfall Horse Trek",
+    "description": "Ride through breathtaking mountain trails to Kyrgyzstan's hidden gem — the Shaar Waterfall, the highest in Central Asia.",
+    "coverImage": "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800&h=600&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop"
+    ],
+    "duration": "Full-day trek (approx. 28 km round trip)",
+    "location": "Shaar Waterfall trail (Naryn Region)",
+    "groupSize": "2–6 participants",
+    "price": 75,
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Shaar Waterfall Horse Trek",
+      "description": "Full-day horseback adventure to Kyrgyzstan's tallest waterfall.",
+      "path": "/activities/activity-4",
+      "image": "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800&h=600&fit=crop",
+      "alt": "Horse riders approaching Shaar Waterfall"
+    }
+  },
+  {
+    "localeGroupId": "activity-5",
+    "locale": "en",
+    "name": "Camping in the Kyrgyz Mountains",
+    "description": "End your days under a canopy of stars, surrounded by silence, fresh air, and the beauty of the wild.",
+    "coverImage": "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&h=600&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1537225228614-56cc3556d7ed?w=800&h=600&fit=crop"
+    ],
+    "duration": "Overnight (customizable)",
+    "location": "Remote mountain camps across Kyrgyzstan",
+    "groupSize": "Any",
+    "price": 45,
+    "status": "active",
+    "availabilityStatus": "available",
+    "metadata": {
+      "title": "Camping in the Kyrgyz Mountains",
+      "description": "Spend nights under the stars in Kyrgyzstan's pristine mountain wilderness.",
+      "path": "/activities/activity-5",
+      "image": "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&h=600&fit=crop",
+      "alt": "Tents set up for camping in Kyrgyz mountain valley"
+    }
+  }
+]

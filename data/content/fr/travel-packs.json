@@ -1,0 +1,68 @@
+[
+  {
+    "id": "pack-1",
+    "name": "Louez une Voiture & Partez",
+    "description": "Vivez l’aventure à votre rythme avec un 4x4 entièrement équipé. Voyagez librement, campez sous les étoiles ou séjournez dans des yourtes et des hôtels.",
+    "coverImage": "/images/travel-packs/rent_car_go.svg",
+    "features": [
+      "Location de 4x4 avec équipement de camping",
+      "Possibilité d’améliorer l’hébergement (yourtes, maisons d’hôtes, hôtels)",
+      "Liberté totale de choisir votre itinéraire et votre rythme",
+      "Parfait pour les familles et les petits groupes"
+    ],
+    "duration": null,
+    "price": null,
+    "ctaLabel": "Voir les détails",
+    "metadata": {
+      "title": "Louez une Voiture & Partez | Explorez le Kirghizistan",
+      "description": "Profitez du Kirghizistan à votre rythme avec un 4x4 et du matériel de camping.",
+      "path": "/travel-packs/pack-1",
+      "image": "/images/travel-packs/rent_car_go.webp",
+      "alt": "Aventure en 4x4 au Kirghizistan"
+    }
+  },
+  {
+    "id": "pack-2",
+    "name": "Laissez un Expert Vous Guider",
+    "description": "Détendez-vous pendant qu’un chauffeur-guide local vous emmène sur des sentiers cachés, cuisine pour vous et partage sa culture.",
+    "coverImage": "/images/travel-packs/expert_guide.svg",
+    "features": [
+      "Chauffeur-guide expérimenté inclus",
+      "Connaissance locale : lieux secrets, traditions et culture",
+      "Expérience culinaire sauvage préparée par votre guide",
+      "Voyage confortable et sécurisé"
+    ],
+    "duration": null,
+    "price": null,
+    "ctaLabel": "Voir les détails",
+    "metadata": {
+      "title": "Aventure Guidée | Explorez le Kirghizistan",
+      "description": "Découvrez le Kirghizistan en toute sérénité avec un guide local expérimenté.",
+      "path": "/travel-packs/pack-2",
+      "image": "/images/travel-packs/expert_guide.webp",
+      "alt": "Voyage guidé au Kirghizistan"
+    }
+  },
+  {
+    "id": "pack-3",
+    "name": "Rejoignez une Aventure en Groupe",
+    "description": "Partagez le voyage avec d’autres explorateurs dans une ambiance conviviale à travers le Kirghizistan.",
+    "coverImage": "/images/travel-packs/group_adventure.svg",
+    "features": [
+      "Taille du groupe : 15–20 personnes",
+      "Organisation d’aventures en bus ou convoi de voitures",
+      "Ambiance sociale et divertissante",
+      "Moments uniques partagés en pleine nature"
+    ],
+    "duration": null,
+    "price": null,
+    "ctaLabel": "Voir les détails",
+    "metadata": {
+      "title": "Aventure en Groupe | Explorez le Kirghizistan",
+      "description": "Rejoignez un groupe de 15 à 20 explorateurs et partagez des moments inoubliables.",
+      "path": "/travel-packs/pack-3",
+      "image": "/images/travel-packs/group_adventure.webp",
+      "alt": "Aventure en groupe au Kirghizistan"
+    }
+  }
+]

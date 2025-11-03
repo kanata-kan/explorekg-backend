@@ -1,0 +1,283 @@
+# 📅 Booking API - نظام الحجوزات
+
+## 📋 المحتويات
+
+- [نظرة عامة](#-نظرة-عامة)
+- [نقاط النهاية](#-نقاط-النهاية)
+- [أمثلة الاستخدام](#-أمثلة-الاستخدام)
+
+---
+
+## 🌟 نظرة عامة
+
+نظام الحجوزات يوفر إدارة كاملة للحجوزات مع **Snapshot-based Architecture** لحماية البيانات، ونظام **TTL** للحذف التلقائي للحجوزات غير المدفوعة.
+
+**Base URL**: `/api/v1/bookings`
+
+---
+
+## 📍 نقاط النهاية
+
+### 1. إنشاء حجز جديد
+
+```http
+POST /api/v1/bookings
+```
+
+**Request Body**:
+
+```json
+{
+  "guestId": "a7b8f226-48ee-4df9-b2f2-8ca9637e02c8",
+  "itemType": "TRAVEL_PACK",
+  "itemId": "673abc456789012345678901",
+  "startDate": "2025-11-10T00:00:00.000Z",
+  "endDate": "2025-11-15T00:00:00.000Z",
+  "numberOfPersons": 2
+}
+```
+
+**Response** (201):
+
+```json
+{
+  "success": true,
+  "data": {
+    "bookingNumber": "BKG-20251102-0001",
+    "guestId": "673abc123...",
+    "itemType": "TRAVEL_PACK",
+    "snapshot": {
+      "itemId": "673abc456...",
+      "title": "Ala-Archa National Park Tour",
+      "price": 150,
+      "description": "...",
+      "imageUrl": "..."
+    },
+    "startDate": "2025-11-10T00:00:00.000Z",
+    "endDate": "2025-11-15T00:00:00.000Z",
+    "numberOfPersons": 2,
+    "totalPrice": 300,
+    "status": "pending",
+    "paymentStatus": "unpaid"
+  }
+}
+```
+
+---
+
+### 2. جلب حجز برقم الحجز
+
+```http
+GET /api/v1/bookings/:bookingNumber
+```
+
+**مثال**: `GET /api/v1/bookings/BKG-20251102-0001`
+
+---
+
+### 3. حجوزات ضيف معين
+
+```http
+GET /api/v1/bookings/guest/:guestId
+```
+
+**يدعم**: UUID session أو MongoDB ObjectId
+
+---
+
+### 4. معالجة الدفع
+
+```http
+POST /api/v1/bookings/:bookingNumber/payment
+```
+
+**Request Body**:
+
+```json
+{
+  "paymentMethod": "CREDIT_CARD",
+  "transactionId": "TXN-987654321"
+}
+```
+
+**Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "bookingNumber": "BKG-20251102-0001",
+    "status": "confirmed",
+    "paymentStatus": "paid",
+    "paidAt": "2025-11-02T10:40:00.000Z"
+  }
+}
+```
+
+---
+
+### 5. إلغاء حجز
+
+```http
+POST /api/v1/bookings/:bookingNumber/cancel
+```
+
+**Request Body**:
+
+```json
+{
+  "reason": "Change of plans"
+}
+```
+
+---
+
+### 6. قائمة جميع الحجوزات
+
+```http
+GET /api/v1/bookings?page=1&limit=10&status=confirmed
+```
+
+**Query Parameters**:
+
+- `page`: رقم الصفحة (default: 1)
+- `limit`: عدد النتائج (default: 10)
+- `status`: pending | confirmed | cancelled | expired
+- `paymentStatus`: unpaid | paid | refunded
+
+---
+
+### 7. تفاصيل الحجز
+
+```http
+GET /api/v1/bookings/:bookingNumber/details
+```
+
+---
+
+### 8. إحصائيات الحجوزات
+
+```http
+GET /api/v1/bookings/statistics
+```
+
+**Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "totalBookings": 156,
+    "pendingBookings": 23,
+    "confirmedBookings": 120,
+    "cancelledBookings": 10,
+    "expiredBookings": 3,
+    "totalRevenue": 45000,
+    "averageBookingValue": 288
+  }
+}
+```
+
+---
+
+### 9. حذف الحجوزات المنتهية
+
+```http
+DELETE /api/v1/bookings/cleanup
+```
+
+---
+
+## 🔢 رقم الحجز (Booking Number)
+
+### التنسيق
+
+```
+BKG-YYYYMMDD-####
+
+مثال: BKG-20251102-0001
+```
+
+### التوليد
+
+- **BKG**: بادئة ثابتة
+- **YYYYMMDD**: تاريخ اليوم
+- **####**: عداد يومي (يبدأ من 0001)
+
+---
+
+## 📸 Snapshot System
+
+### لماذا Snapshot؟
+
+✅ حماية من تغيير الأسعار  
+✅ حفظ تاريخي للبيانات  
+✅ قابلية للتدقيق
+
+### محتوى Snapshot
+
+```json
+{
+  "itemId": "...",
+  "title": "...",
+  "description": "...",
+  "price": 150,
+  "imageUrl": "...",
+  "category": "...",
+  "duration": "5 days"
+}
+```
+
+---
+
+## ⏰ TTL (Time To Live)
+
+الحجوزات **غير المدفوعة** تُحذف تلقائيًا بعد **24 ساعة**.
+
+```javascript
+// TTL Index
+BookingSchema.index(
+  { createdAt: 1 },
+  {
+    expireAfterSeconds: 86400,
+    partialFilterExpression: { paymentStatus: 'unpaid' },
+  }
+);
+```
+
+---
+
+## 💡 أمثلة الاستخدام
+
+### رحلة حجز كاملة
+
+```javascript
+// 1. Create Guest
+const guest = await createGuest({
+  email: 'tourist@example.com',
+  name: 'Ahmed Khan',
+});
+
+// 2. Browse Travel Packs
+const packs = await getTravelPacks({ language: 'en' });
+
+// 3. Create Booking
+const booking = await createBooking({
+  guestId: guest.sessionId,
+  itemType: 'TRAVEL_PACK',
+  itemId: packs[0]._id,
+  startDate: '2025-11-10T00:00:00.000Z',
+  endDate: '2025-11-15T00:00:00.000Z',
+  numberOfPersons: 2,
+});
+
+// 4. Process Payment
+await processPayment(booking.bookingNumber, {
+  paymentMethod: 'CREDIT_CARD',
+  transactionId: 'TXN-123',
+});
+```
+
+---
+
+_📘 Auto-generated by Copilot Documentation Architect — ExploreKG Server Project_
