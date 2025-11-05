@@ -318,8 +318,10 @@ export const validateCarQuery = (
   next: NextFunction
 ) => {
   try {
+    // Use sanitized query from security middleware, fallback to req.query
+    const queryData = (req as any).sanitizedQuery || req.query;
     // Parse and validate query
-    const validatedQuery = carQuerySchema.parse(req.query);
+    const validatedQuery = carQuerySchema.parse(queryData);
 
     // Store validated data
     (req as any).validatedQuery = validatedQuery;

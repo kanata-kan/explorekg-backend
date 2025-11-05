@@ -265,7 +265,9 @@ export const validateActivityQuery = (
   next: NextFunction
 ) => {
   try {
-    const validated = activityQuerySchema.parse(req.query);
+    // Use sanitized query from security middleware, fallback to req.query
+    const queryData = (req as any).sanitizedQuery || req.query;
+    const validated = activityQuerySchema.parse(queryData);
     (req as any).validatedQuery = validated;
     next();
   } catch (error: any) {

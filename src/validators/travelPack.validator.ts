@@ -287,9 +287,11 @@ export const validateBody = (schema: z.ZodSchema) => {
 export const validateQuery = (schema: z.ZodSchema) => {
   return (req: any, res: any, next: any) => {
     try {
-      const validated = schema.parse(req.query);
-      // Note: Don't reassign req.query as it's read-only in Express 5
-      // The validation is sufficient to ensure the query is valid
+      // Use sanitized query from security middleware, fallback to req.query
+      const queryData = req.sanitizedQuery || req.query;
+      const validated = schema.parse(queryData);
+      // Store validated query for controllers to use
+      req.validatedQuery = validated;
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {

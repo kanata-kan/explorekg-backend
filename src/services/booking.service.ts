@@ -231,6 +231,9 @@ export const createBooking = async (
     // Calculate pricing
     const pricing = calculateBookingPrice(snapshot, data);
 
+    // Calculate expiration date (24 hours from now)
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
     // Create booking
     const booking = new Booking({
       bookingNumber,
@@ -245,10 +248,11 @@ export const createBooking = async (
       currency: snapshot.currency,
       status: BookingStatus.PENDING,
       paymentStatus: PaymentStatus.UNPAID,
+      expiresAt, // Explicitly set expiration
       metadata: data.metadata,
     });
 
-    // expiresAt will be auto-calculated by pre-save hook (24 hours)
+    // expiresAt is now explicitly set
     await booking.save();
 
     // TODO: Send email notification (mock)

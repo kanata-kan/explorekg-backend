@@ -147,13 +147,33 @@ export const validateBookingOwnership = (
         return;
       }
 
-      // التحقق من الملكية
-      if (booking.guestId !== guestSessionId) {
+      // Find guest by sessionId to get their ObjectId
+      const guest = await Guest.findOne({ sessionId: guestSessionId });
+
+      if (!guest) {
+        logger.warn(
+          {
+            guestSessionId,
+            ip: req.ip,
+          },
+          'Guest session not found'
+        );
+
+        res.status(401).json({
+          success: false,
+          error: 'Invalid guest session',
+          code: 'INVALID_SESSION',
+        });
+        return;
+      }
+
+      // التحقق من الملكية - compare ObjectIds
+      if (booking.guestId.toString() !== guest._id.toString()) {
         logger.warn(
           {
             bookingNumber,
-            providedGuestId: guestSessionId,
-            actualGuestId: booking.guestId,
+            providedGuestId: guest._id.toString(),
+            actualGuestId: booking.guestId.toString(),
             ip: req.ip,
           },
           'Attempted unauthorized booking access'

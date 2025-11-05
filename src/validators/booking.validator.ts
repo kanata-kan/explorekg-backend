@@ -324,7 +324,9 @@ export const validateParams = (schema: z.ZodSchema) => {
 export const validateQuery = (schema: z.ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const validated = await schema.parseAsync(req.query);
+      // Use sanitized query from security middleware, fallback to req.query
+      const queryData = (req as any).sanitizedQuery || req.query;
+      const validated = await schema.parseAsync(queryData);
       (req as any).validatedQuery = validated;
       next();
     } catch (error) {

@@ -1,25 +1,75 @@
 // src/middleware/security.ts
 import { Request, Response, NextFunction } from 'express';
-import mongoSanitize from 'express-mongo-sanitize';
 import { xss } from 'express-xss-sanitizer';
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
 import { ENV } from '../config/env';
+import { logger } from '../utils/logger';
+
+/**
+ * Custom NoSQL Injection Sanitizer (Express 5 compatible)
+ * Removes dangerous MongoDB operators from request data
+ */
+const sanitizeObject = (obj: any): any => {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeObject(item));
+  }
+
+  const sanitized: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    // Remove MongoDB operators
+    if (key.startsWith('$') || key.includes('.')) {
+      logger.warn(`⚠️ Blocked NoSQL injection attempt: key "${key}"`);
+      continue;
+    }
+    sanitized[key] = sanitizeObject(value);
+  }
+  return sanitized;
+};
+
+const noSqlInjectionSanitizer = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Sanitize body
+    if (req.body && typeof req.body === 'object') {
+      req.body = sanitizeObject(req.body);
+    }
+
+    // Sanitize params
+    if (req.params && typeof req.params === 'object') {
+      req.params = sanitizeObject(req.params);
+    }
+
+    // For query, we need to create a sanitized copy
+    // because req.query is read-only in Express 5
+    if (req.query && typeof req.query === 'object') {
+      const sanitizedQuery = sanitizeObject({ ...req.query });
+      // Store sanitized query in a custom property
+      (req as any).sanitizedQuery = sanitizedQuery;
+      // Also update the validators to use sanitizedQuery
+    }
+
+    next();
+  } catch (error) {
+    logger.error({ error }, 'Error in NoSQL sanitization');
+    next();
+  }
+};
 
 /**
  * Input Sanitization Middleware
  * Protects against NoSQL injection and XSS attacks
  */
 export const inputSanitizer = [
-  // NoSQL injection protection
-  mongoSanitize({
-    replaceWith: '_', // Replace prohibited characters with underscore
-    onSanitize: ({ req, key }) => {
-      console.warn(
-        `⚠️ Sanitized NoSQL injection attempt: ${key} in ${req.path}`
-      );
-    },
-  }),
+  // Custom NoSQL injection protection (Express 5 compatible)
+  noSqlInjectionSanitizer,
 
   // XSS protection
   xss({
@@ -38,7 +88,9 @@ export const corsConfig = {
     callback: (err: Error | null, allow?: boolean) => void
   ) => {
     // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      return callback(null, true);
+    }
 
     if (ENV.NODE_ENV === 'development') {
       return callback(null, true);
