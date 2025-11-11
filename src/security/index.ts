@@ -67,14 +67,14 @@ export {
   paymentRateLimit,
   progressiveSlowDown,
   sessionFingerprintValidator,
-} from './security';
+} from '../middleware/security';
 
 export {
   suspiciousActivityDetector,
   dataAccessAuditor,
   authFailureTracker,
   logSecurityEvent,
-} from './securityAudit';
+} from '../middleware/securityAudit';
 
 export {
   advancedSecurityHeaders,
@@ -83,4 +83,4 @@ export {
   requestComplexityLimiter,
   suspiciousUserAgentDetector,
   honeypotEndpoints,
-} from './advancedSecurity';
+} from '../middleware/advancedSecurity';
