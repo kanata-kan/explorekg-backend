@@ -81,6 +81,14 @@
 │  │  - Data transformation                               │  │
 │  │  - External service integration                      │  │
 │  │  - Complex operations orchestration                  │  │
+│  └──────────────────┬───────────────────────────────────┘  │
+│                     │ Uses
+│  ┌──────────────────▼───────────────────────────────────┐  │
+│  │      Business Policy Layer ⭐ NEW                    │  │
+│  │  - Business rules separation                        │  │
+│  │  - State management policies                        │  │
+│  │  - Pricing policies                                 │  │
+│  │  - Validation policies                              │  │
 │  └──────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │         Models Layer (Mongoose ODM)                  │  │

@@ -6,6 +6,8 @@ import {
   signSession,
   generateSessionFingerprint,
 } from '../utils/sessionSecurity';
+// Business Policy Layer imports
+import { GuestPolicy } from '../policies';
 
 /**
  * Guest Service Layer
@@ -62,6 +64,9 @@ export interface GuestStatistics {
  */
 export const createGuest = async (data: CreateGuestData): Promise<IGuest> => {
   try {
+    // Validate email using policy
+    GuestPolicy.canCreateGuest(data.email);
+
     // Generate unique UUID v4 for sessionId
     const sessionId = uuidv4();
 
@@ -73,9 +78,8 @@ export const createGuest = async (data: CreateGuestData): Promise<IGuest> => {
       );
     }
 
-    // Calculate expiration date (30 days from now)
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
+    // Calculate expiration date using policy (30 days from now)
+    const expiresAt = GuestPolicy.calculateExpirationDate();
 
     // Create guest document
     const guest = new Guest({
@@ -154,11 +158,16 @@ export const updateGuest = async (
   // Find guest first to validate existence and expiration
   const guest = await findBySessionId(sessionId);
 
-  // Check if guest is linked to user (prevent updates if linked)
-  if (guest.userId) {
-    throw new ValidationError(
-      'Cannot update guest information - already linked to registered user'
-    );
+  // Use policy to check if guest can be updated
+  if (!GuestPolicy.canUpdateGuest(guest)) {
+    if (guest.userId) {
+      throw new ValidationError(
+        'Cannot update guest information - already linked to registered user'
+      );
+    }
+    if (guest.isExpired()) {
+      throw new ValidationError('Guest session has expired');
+    }
   }
 
   // Apply updates
@@ -207,8 +216,8 @@ export const linkToUser = async (
 ): Promise<IGuest> => {
   const guest = await findBySessionId(sessionId);
 
-  // Validate guest can be linked
-  if (!guest.canBeLinkedToUser()) {
+  // Use policy to check if guest can be linked
+  if (!GuestPolicy.canLinkToUser(guest)) {
     throw new ValidationError(
       'Guest cannot be linked to user (already linked, expired, or migration disabled)'
     );

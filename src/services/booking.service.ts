@@ -13,6 +13,15 @@ import TravelPack from '../models/travelPack.model';
 import { Activity } from '../models/activity.model';
 import { Car } from '../models/car.model';
 import { NotFoundError, ValidationError } from '../utils/AppError';
+// Business Policy Layer imports
+import {
+  BookingPolicy,
+  BookingStatePolicy,
+  BookingSnapshotPolicy,
+  TaxPolicy,
+} from '../policies';
+// Pricing Service imports
+import { calculatePrice } from './pricing.service';
 
 /**
  * Create Booking Data Interface
@@ -165,39 +174,24 @@ const createBookingSnapshot = async (
 
 /**
  * Calculate booking price
+ * Uses unified PricingService for consistent pricing calculations
  */
 const calculateBookingPrice = (
   snapshot: BookingSnapshot,
   data: CreateBookingData
 ): { subtotal: number; tax: number; discount: number; totalPrice: number } => {
-  let subtotal = 0;
+  // Use unified PricingService
+  const pricing = calculatePrice(snapshot, data, {
+    includeTax: true,
+    includeDeposit: false,
+  });
 
-  switch (snapshot.itemType) {
-    case BookingItemType.TRAVEL_PACK:
-    case BookingItemType.ACTIVITY:
-      const persons = data.numberOfPersons || data.numberOfUnits || 1;
-      subtotal = (snapshot.pricePerPerson || 0) * persons;
-      break;
-
-    case BookingItemType.CAR:
-      const days = data.numberOfDays || 1;
-      subtotal = (snapshot.pricePerDay || 0) * days;
-      break;
-
-    default:
-      subtotal = snapshot.pricePerUnit || 0;
-  }
-
-  // Calculate tax (10%)
-  const tax = subtotal * 0.1;
-
-  // No discount for now
-  const discount = 0;
-
-  // Total
-  const totalPrice = subtotal + tax - discount;
-
-  return { subtotal, tax, discount, totalPrice };
+  return {
+    subtotal: pricing.subtotal,
+    tax: pricing.tax,
+    discount: pricing.discount,
+    totalPrice: pricing.total,
+  };
 };
 
 /**
@@ -207,6 +201,9 @@ export const createBooking = async (
   data: CreateBookingData
 ): Promise<IBooking> => {
   try {
+    // Validate booking data using policy
+    BookingPolicy.validateBookingData(data);
+
     // Validate guest exists and is not expired
     const guest = await Guest.findById(data.guestId);
 
@@ -214,7 +211,8 @@ export const createBooking = async (
       throw new NotFoundError(`Guest with id "${data.guestId}" not found`);
     }
 
-    if (guest.isExpired()) {
+    // Use policy to check if guest can create booking
+    if (!BookingPolicy.canCreateBooking(guest)) {
       throw new ValidationError('Guest session has expired');
     }
 
@@ -228,11 +226,14 @@ export const createBooking = async (
       data.locale || guest.locale || 'en'
     );
 
+    // Validate snapshot using policy
+    BookingSnapshotPolicy.validateSnapshot(snapshot);
+
     // Calculate pricing
     const pricing = calculateBookingPrice(snapshot, data);
 
-    // Calculate expiration date (24 hours from now)
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // Calculate expiration date using policy (24 hours from now)
+    const expiresAt = BookingPolicy.calculateExpirationDate();
 
     // Create booking
     const booking = new Booking({
@@ -329,13 +330,11 @@ export const updateBookingStatus = async (
 ): Promise<IBooking> => {
   const booking = await findByBookingNumber(bookingNumber);
 
-  // Validate status transition
-  if (booking.status === BookingStatus.CANCELLED) {
-    throw new ValidationError('Cannot update cancelled booking');
-  }
-
-  if (booking.status === BookingStatus.EXPIRED) {
-    throw new ValidationError('Cannot update expired booking');
+  // Validate status transition using policy
+  try {
+    BookingStatePolicy.validateTransition(booking.status, status);
+  } catch (error: any) {
+    throw new ValidationError(error.message);
   }
 
   booking.status = status;
@@ -356,16 +355,23 @@ export const markAsPaid = async (
 ): Promise<IBooking> => {
   const booking = await findByBookingNumber(bookingNumber);
 
-  if (booking.paymentStatus === PaymentStatus.PAID) {
-    throw new ValidationError('Booking already paid');
-  }
-
-  if (booking.status === BookingStatus.CANCELLED) {
-    throw new ValidationError('Cannot pay for cancelled booking');
-  }
-
-  if (booking.isExpired()) {
-    throw new ValidationError('Cannot pay for expired booking');
+  // Use policy to check if booking can be paid
+  if (
+    !BookingStatePolicy.canPay(
+      booking.status,
+      booking.paymentStatus,
+      booking.isExpired()
+    )
+  ) {
+    if (booking.paymentStatus === PaymentStatus.PAID) {
+      throw new ValidationError('Booking already paid');
+    }
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new ValidationError('Cannot pay for cancelled booking');
+    }
+    if (booking.isExpired()) {
+      throw new ValidationError('Cannot pay for expired booking');
+    }
   }
 
   // Update payment status
@@ -394,7 +400,8 @@ export const cancelBooking = async (
 ): Promise<IBooking> => {
   const booking = await findByBookingNumber(bookingNumber);
 
-  if (!booking.canBeCancelled()) {
+  // Use policy to check if booking can be cancelled
+  if (!BookingStatePolicy.canCancel(booking.status)) {
     throw new ValidationError(
       'Booking cannot be cancelled (already cancelled or expired)'
     );

@@ -4,6 +4,9 @@ import TravelPack from '../models/travelPack.model';
 import { Activity } from '../models/activity.model';
 import { Car } from '../models/car.model';
 import { NotFoundError, ValidationError } from '../utils/AppError';
+// Pricing Service imports
+import { calculatePackRelationPrice, calculateDeposit } from './pricing.service';
+import { DepositPolicy } from '../policies';
 
 /**
  * PackRelation Service
@@ -317,6 +320,8 @@ export const calculateTotalPrice = (
   // If custom strategy, use customPrice and ignore item calculations
   if (pricingConfig.strategy === 'custom' && pricingConfig.customPrice) {
     const finalTotal = pricingConfig.customPrice;
+    // Use DepositPolicy for consistent deposit calculation
+    const deposit = DepositPolicy.calculateDeposit(finalTotal);
     return {
       activitiesTotal: 0,
       optionalActivitiesTotal: 0,
@@ -325,7 +330,7 @@ export const calculateTotalPrice = (
       globalDiscount: 0,
       discountAmount: 0,
       finalTotal,
-      deposit: Math.round(finalTotal * 0.2 * 100) / 100,
+      deposit: Math.round(deposit * 100) / 100,
     };
   }
 
@@ -346,15 +351,27 @@ export const calculateTotalPrice = (
 
   const carsTotal = validCars.reduce((sum, c) => sum + c.totalPrice, 0);
 
-  // Subtotal = required activities + cars (optional activities not included)
-  const subtotal = activitiesTotal + carsTotal;
+  // Use unified PricingService for consistent pricing calculations
+  // Note: Pack relations don't include tax in finalTotal (tax is calculated separately if needed)
+  const pricing = calculatePackRelationPrice(
+    activitiesTotal,
+    carsTotal,
+    optionalActivitiesTotal,
+    pricingConfig.globalDiscount,
+    {
+      includeTax: false, // Pack relations don't include tax in finalTotal
+      includeDeposit: true, // Include deposit calculation
+    }
+  );
 
-  // Apply global discount
-  const globalDiscount = pricingConfig.globalDiscount || 0;
-  const discountAmount = subtotal * (globalDiscount / 100);
-
+  // Extract values from pricing result
+  // Note: Pack relations don't include tax in finalTotal, so we use subtotal - discount
+  const subtotal = pricing.subtotal;
+  const globalDiscount = pricing.discount;
+  const discountAmount = pricing.discountAmount;
+  // finalTotal = subtotal - discount (no tax for pack relations)
   const finalTotal = subtotal - discountAmount;
-  const deposit = finalTotal * 0.2;
+  const deposit = pricing.deposit || DepositPolicy.calculateDeposit(finalTotal);
 
   return {
     activitiesTotal: Math.round(activitiesTotal * 100) / 100,
