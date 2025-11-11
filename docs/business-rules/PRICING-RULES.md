@@ -1,17 +1,36 @@
 # قواعد التسعير - Pricing Business Rules
 
 **التاريخ**: 2025-01-27  
-**المرحلة**: Phase 7.1  
-**الحالة**: ✅ موثق
+**المرحلة**: Phase 7.2 - Pricing Unification  
+**الحالة**: ✅ موثق ومحدث
 
 ---
 
 ## 📋 جدول المحتويات
 
-1. [قواعد الضريبة](#قواعد-الضريبة)
-2. [قواعد الخصومات](#قواعد-الخصومات)
-3. [قواعد الدفعة المقدمة](#قواعد-الدفعة-المقدمة)
-4. [أمثلة على الحسابات](#أمثلة-على-الحسابات)
+1. [نظرة عامة](#نظرة-عامة)
+2. [قواعد الضريبة](#قواعد-الضريبة)
+3. [قواعد الخصومات](#قواعد-الخصومات)
+4. [قواعد الدفعة المقدمة](#قواعد-الدفعة-المقدمة)
+5. [PricingService الموحد](#pricingservice-الموحد)
+6. [أمثلة على الحسابات](#أمثلة-على-الحسابات)
+
+---
+
+## نظرة عامة
+
+تم توحيد نظام التسعير في Phase 7.2 من خلال إنشاء **PricingService** موحد. هذا يضمن:
+
+- ✅ **الاتساق**: نفس منطق التسعير في جميع الخدمات
+- ✅ **المرونة**: دعم خيارات متعددة (ضريبة، خصم، دفعة مقدمة)
+- ✅ **القابلية للصيانة**: منطق موحد في مكان واحد
+- ✅ **القابلية للاختبار**: سهولة اختبار منطق التسعير
+
+### المكونات الرئيسية
+
+1. **PricingService** (`src/services/pricing.service.ts`) - الخدمة الموحدة
+2. **PricingConfig** (`src/config/pricing.config.ts`) - التكوين المركزي
+3. **Policies** (`src/policies/pricing/`) - قواعد التسعير
 
 ---
 
@@ -204,27 +223,143 @@ const deposit = DepositPolicy.calculateDeposit(totalPrice); // 20
 const remaining = totalPrice - deposit; // 80
 ```
 
-### مثال 4: حساب كامل (خصم + ضريبة + دفعة مقدمة)
+### مثال 4: حساب كامل باستخدام PricingService
 
 ```typescript
-// Input
-const originalPrice = 100;
-const discountPercent = 10;
+import { calculatePrice } from '../services/pricing.service';
 
+const snapshot: BookingSnapshot = {
+  itemType: BookingItemType.ACTIVITY,
+  itemId: 'activity-123',
+  title: 'Test Activity',
+  pricePerPerson: 50,
+  currency: 'USD',
+  locale: 'en',
+  snapshotAt: new Date(),
+};
+
+const data: CreateBookingData = {
+  guestId: 'guest-123',
+  itemType: BookingItemType.ACTIVITY,
+  itemId: 'activity-123',
+  numberOfPersons: 2,
+};
+
+// Calculate complete pricing with discount and deposit
+const pricing = calculatePrice(snapshot, data, {
+  discountPercentage: 10,
+  includeTax: true,
+  includeDeposit: true,
+});
+
+// Result:
+// {
+//   subtotal: 100,
+//   tax: 9,              // 10% of 90
+//   discount: 10,
+//   discountAmount: 10,
+//   total: 99,           // 90 + 9
+//   deposit: 19.8        // 20% of 99
+// }
+```
+
+### مثال 5: حساب سعر Pack Relation
+
+```typescript
+import { calculatePackRelationPrice } from '../services/pricing.service';
+
+const pricing = calculatePackRelationPrice(
+  200,  // activitiesTotal
+  300,  // carsTotal
+  100,  // optionalActivitiesTotal (not included in subtotal)
+  10,   // globalDiscount (10%)
+  { includeDeposit: true }
+);
+
+// Result:
+// {
+//   subtotal: 500,      // 200 + 300
+//   tax: 0,             // Tax not included by default
+//   discount: 10,
+//   discountAmount: 50, // 10% of 500
+//   total: 450,         // 500 - 50
+//   deposit: 90         // 20% of 450
+// }
+```
+
+---
+
+## PricingService الموحد
+
+### PR-010: استخدام PricingService
+
+**القاعدة**: جميع حسابات التسعير يجب أن تستخدم `PricingService`
+
+**التنفيذ**: `calculatePrice()` أو `calculatePackRelationPrice()`
+
+**الكود**:
+```typescript
+// ✅ Correct - Using PricingService
+import { calculatePrice } from '../services/pricing.service';
+
+const pricing = calculatePrice(snapshot, data, {
+  includeTax: true,
+  includeDeposit: false,
+});
+
+// ❌ Incorrect - Direct calculation
+const tax = subtotal * 0.1; // Don't do this!
+```
+
+---
+
+### PR-011: حساب المبلغ الفرعي
+
+**القاعدة**: حساب المبلغ الفرعي بناءً على نوع العنصر
+
+**التنفيذ**: `calculateSubtotal(snapshot, data)`
+
+**القواعد**:
+- للأنشطة/الحزم: `pricePerPerson × numberOfPersons`
+- للسيارات: `pricePerDay × numberOfDays`
+- التقريب إلى منزلتين عشريتين
+
+**الكود**:
+```typescript
+const subtotal = calculateSubtotal(snapshot, data);
+```
+
+---
+
+### PR-012: ترتيب تطبيق الخصم والضريبة
+
+**القاعدة**: الخصم يُطبق أولاً، ثم الضريبة على السعر بعد الخصم
+
+**التنفيذ**: `calculatePrice()` أو `calculateTotal()`
+
+**الكود**:
+```typescript
 // Step 1: Apply discount
-const discountedPrice = DiscountPolicy.applyDiscount(originalPrice, discountPercent); // 90
+const discountedPrice = originalPrice - (originalPrice * discountPercent / 100);
 
-// Step 2: Calculate tax
-const tax = TaxPolicy.calculateTax(discountedPrice); // 9
+// Step 2: Calculate tax on discounted price
+const tax = discountedPrice * taxRate;
 
 // Step 3: Calculate total
-const totalPrice = discountedPrice + tax; // 99
+const total = discountedPrice + tax;
+```
 
-// Step 4: Calculate deposit
-const deposit = DepositPolicy.calculateDeposit(totalPrice); // 19.8
+---
 
-// Step 5: Calculate remaining
-const remaining = totalPrice - deposit; // 79.2
+### PR-013: حساب الدفعة المقدمة
+
+**القاعدة**: الدفعة المقدمة تُحسب من الإجمالي النهائي (بعد الخصم والضريبة)
+
+**التنفيذ**: `calculateDeposit(total)` أو `calculatePrice(..., { includeDeposit: true })`
+
+**الكود**:
+```typescript
+const deposit = calculateDeposit(total); // 20% of total
 ```
 
 ---
@@ -242,6 +377,10 @@ const remaining = totalPrice - deposit; // 79.2
 | PR-007 | معدل الدفعة المقدمة الافتراضي (20%) | `DepositPolicy.calculateDeposit()` |
 | PR-008 | دفعة مقدمة قابلة للتكوين | `DepositPolicy.calculateDeposit(total, depositRate)` |
 | PR-009 | دفعة مقدمة من environment | `DepositPolicy.getDepositRate()` |
+| PR-010 | استخدام PricingService | `calculatePrice()` / `calculatePackRelationPrice()` |
+| PR-011 | حساب المبلغ الفرعي | `calculateSubtotal()` |
+| PR-012 | ترتيب تطبيق الخصم والضريبة | الخصم أولاً، ثم الضريبة |
+| PR-013 | حساب الدفعة المقدمة | `calculateDeposit()` من الإجمالي النهائي |
 
 ---
 

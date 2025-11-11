@@ -1,6 +1,7 @@
 // tests/unit/policies/booking/state.policy.test.ts
 import { BookingStatePolicy } from '../../../../src/policies/booking/state.policy';
 import { BookingStatus, PaymentStatus } from '../../../../src/models/booking.model';
+import { StateTransitionError } from '../../../../src/utils/AppError';
 
 describe('BookingStatePolicy', () => {
   describe('canTransition', () => {
@@ -140,6 +141,28 @@ describe('BookingStatePolicy', () => {
     });
   });
 
+  describe('getValidTransitions', () => {
+    it('should return valid transitions for PENDING', () => {
+      const transitions = BookingStatePolicy.getValidTransitions(BookingStatus.PENDING);
+      expect(transitions).toContain(BookingStatus.CONFIRMED);
+      expect(transitions).toContain(BookingStatus.CANCELLED);
+      expect(transitions).toContain(BookingStatus.EXPIRED);
+    });
+
+    it('should return valid transitions for CONFIRMED', () => {
+      const transitions = BookingStatePolicy.getValidTransitions(BookingStatus.CONFIRMED);
+      expect(transitions).toContain(BookingStatus.CANCELLED);
+      expect(transitions).not.toContain(BookingStatus.PENDING);
+    });
+
+    it('should return empty array for terminal states', () => {
+      const cancelledTransitions = BookingStatePolicy.getValidTransitions(BookingStatus.CANCELLED);
+      const expiredTransitions = BookingStatePolicy.getValidTransitions(BookingStatus.EXPIRED);
+      expect(cancelledTransitions).toEqual([]);
+      expect(expiredTransitions).toEqual([]);
+    });
+  });
+
   describe('validateTransition', () => {
     it('should not throw for valid transition', () => {
       expect(() => {
@@ -147,17 +170,31 @@ describe('BookingStatePolicy', () => {
       }).not.toThrow();
     });
 
-    it('should throw for invalid transition', () => {
+    it('should throw StateTransitionError for invalid transition', () => {
       expect(() => {
         BookingStatePolicy.validateTransition(BookingStatus.CANCELLED, BookingStatus.CONFIRMED);
-      }).toThrow('Invalid state transition');
+      }).toThrow(StateTransitionError);
     });
 
     it('should include valid transitions in error message', () => {
       try {
         BookingStatePolicy.validateTransition(BookingStatus.CANCELLED, BookingStatus.CONFIRMED);
       } catch (error: any) {
+        expect(error.message).toContain('Invalid state transition');
         expect(error.message).toContain('Valid transitions');
+        expect(error.currentStatus).toBe(BookingStatus.CANCELLED);
+        expect(error.targetStatus).toBe(BookingStatus.CONFIRMED);
+        expect(error.validTransitions).toBeDefined();
+      }
+    });
+
+    it('should include current and target status in error', () => {
+      try {
+        BookingStatePolicy.validateTransition(BookingStatus.EXPIRED, BookingStatus.PENDING);
+      } catch (error: any) {
+        expect(error).toBeInstanceOf(StateTransitionError);
+        expect(error.currentStatus).toBe(BookingStatus.EXPIRED);
+        expect(error.targetStatus).toBe(BookingStatus.PENDING);
       }
     });
   });

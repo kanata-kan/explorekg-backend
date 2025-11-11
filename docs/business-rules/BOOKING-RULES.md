@@ -1,8 +1,8 @@
 # قواعد الحجز - Booking Business Rules
 
 **التاريخ**: 2025-01-27  
-**المرحلة**: Phase 7.1  
-**الحالة**: ✅ موثق
+**المرحلة**: Phase 7.3 - State Management  
+**الحالة**: ✅ موثق ومحدث
 
 ---
 
@@ -106,23 +106,39 @@ const expiresAt = BookingPolicy.calculateExpirationDate(); // 24 hours from now
 
 ---
 
-### BR-008: State Transitions
+### BR-008: State Transitions (محدث)
 
 **القاعدة**: فقط الانتقالات الصالحة مسموحة
 
 **الانتقالات الصالحة**:
 - `PENDING` → `CONFIRMED`, `CANCELLED`, `EXPIRED`
 - `CONFIRMED` → `CANCELLED`
-- `CANCELLED` → (لا انتقالات)
-- `EXPIRED` → (لا انتقالات)
+- `CANCELLED` → (لا انتقالات - حالة نهائية)
+- `EXPIRED` → (لا انتقالات - حالة نهائية)
 
-**التنفيذ**: `BookingStatePolicy.canTransition(from, to)`
+**التنفيذ**: `BookingStatePolicy.validateTransition(from, to)` - يرمي `StateTransitionError` إذا كان غير صالح
 
 **الكود**:
 ```typescript
+// ✅ Correct - Using validateTransition
+BookingStatePolicy.validateTransition(booking.status, newStatus);
+// Throws StateTransitionError with detailed information if invalid
+
+// ❌ Incorrect - Manual check
 if (!BookingStatePolicy.canTransition(booking.status, newStatus)) {
-  throw new ValidationError('Invalid state transition');
+  throw new ValidationError('Invalid transition');
 }
+```
+
+**الحصول على الانتقالات الصالحة**:
+```typescript
+// Get valid next statuses
+const validStatuses = BookingStatePolicy.getValidNextStatuses(BookingStatus.PENDING);
+// Returns: [CONFIRMED, CANCELLED, EXPIRED]
+
+// Alias method
+const transitions = BookingStatePolicy.getValidTransitions(BookingStatus.PENDING);
+// Returns: [CONFIRMED, CANCELLED, EXPIRED]
 ```
 
 ---
@@ -144,33 +160,42 @@ if (!BookingStatePolicy.canModify(booking.status)) {
 
 ## قواعد الدفع
 
-### BR-010: شروط الدفع
+### BR-010: شروط الدفع (محدث)
 
 **القاعدة**: لا يمكن الدفع إذا:
-- ❌ الحجز ملغي
-- ❌ الحجز منتهي الصلاحية
-- ❌ الحجز مدفوع بالفعل
+- ❌ الحجز مدفوع بالفعل (`paymentStatus === PAID`)
+- ❌ الحجز ملغي (`status === CANCELLED`)
+- ❌ الحجز منتهي الصلاحية (`isExpired() === true`)
 
-**التنفيذ**: `BookingStatePolicy.canPay(status, paymentStatus, isExpired)`
+**التنفيذ**: `PaymentPolicy.canPay(booking)` أو `PaymentPolicy.validateCanPay(booking)`
 
 **الكود**:
 ```typescript
-if (!BookingStatePolicy.canPay(
-  booking.status,
-  booking.paymentStatus,
-  booking.isExpired()
-)) {
-  throw new ValidationError('Cannot pay for this booking');
-}
+// ✅ Correct - Using PaymentPolicy
+PaymentPolicy.validateCanPay(booking);
+
+// ❌ Incorrect - Direct check
+if (booking.paymentStatus === PaymentStatus.PAID) { ... }
 ```
 
 ---
 
-### BR-011: تحديث الحالة بعد الدفع
+### BR-011: تحديث الحالة بعد الدفع (محدث)
 
 **القاعدة**: عند الدفع → `status = CONFIRMED`, `paymentStatus = PAID`
 
-**التنفيذ**: في `booking.service.ts:markAsPaid()`
+**التنفيذ**: `PaymentPolicy.getPaymentStatusAfterPayment()` و `PaymentPolicy.getBookingStatusAfterPayment()`
+
+**الكود**:
+```typescript
+// ✅ Correct - Using PaymentPolicy
+booking.paymentStatus = PaymentPolicy.getPaymentStatusAfterPayment(); // PAID
+booking.status = PaymentPolicy.getBookingStatusAfterPayment(); // CONFIRMED
+
+// ❌ Incorrect - Hardcoded values
+booking.paymentStatus = PaymentStatus.PAID;
+booking.status = BookingStatus.CONFIRMED;
+```
 
 ---
 
@@ -191,11 +216,29 @@ if (!BookingStatePolicy.canCancel(booking.status)) {
 
 ---
 
-### BR-013: الاسترداد التلقائي
+### BR-013: الاسترداد التلقائي (محدث)
 
 **القاعدة**: إذا كان الحجز مدفوعاً وتم إلغاؤه → `paymentStatus = REFUNDED`
 
-**التنفيذ**: في `booking.service.ts:cancelBooking()`
+**التنفيذ**: `PaymentPolicy.getPaymentStatusAfterCancellation(paymentStatus)`
+
+**الكود**:
+```typescript
+// ✅ Correct - Using PaymentPolicy
+booking.paymentStatus = PaymentPolicy.getPaymentStatusAfterCancellation(
+  booking.paymentStatus
+);
+
+// ❌ Incorrect - Direct check
+if (booking.paymentStatus === PaymentStatus.PAID) {
+  booking.paymentStatus = PaymentStatus.REFUNDED;
+}
+```
+
+**القواعد**:
+- إذا كان `PAID` → `REFUNDED`
+- إذا كان `UNPAID` → `UNPAID` (لا تغيير)
+- إذا كان `REFUNDED` → `REFUNDED` (لا تغيير)
 
 ---
 
@@ -254,10 +297,13 @@ Legend:
 | BR-003 | Snapshot | `BookingSnapshotPolicy.validateSnapshot()` |
 | BR-005 | الضريبة | `TaxPolicy.calculateTax()` |
 | BR-006 | انتهاء الصلاحية | `BookingPolicy.calculateExpirationDate()` |
-| BR-008 | State Transitions | `BookingStatePolicy.canTransition()` |
+| BR-008 | State Transitions | `BookingStatePolicy.validateTransition()` |
 | BR-009 | التعديل | `BookingStatePolicy.canModify()` |
-| BR-010 | الدفع | `BookingStatePolicy.canPay()` |
+| BR-010 | الدفع | `PaymentPolicy.canPay()` / `PaymentPolicy.validateCanPay()` |
+| BR-011 | تحديث الحالة بعد الدفع | `PaymentPolicy.getPaymentStatusAfterPayment()` / `getBookingStatusAfterPayment()` |
 | BR-012 | الإلغاء | `BookingStatePolicy.canCancel()` |
+| BR-013 | الاسترداد التلقائي | `PaymentPolicy.getPaymentStatusAfterCancellation()` |
+| BR-014 | الحصول على الانتقالات الصالحة | `BookingStatePolicy.getValidNextStatuses()` / `getValidTransitions()` |
 
 ---
 

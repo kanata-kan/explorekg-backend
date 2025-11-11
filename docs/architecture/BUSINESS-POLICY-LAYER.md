@@ -61,6 +61,7 @@ src/policies/
 ├── booking/
 │   ├── booking.policy.ts      # قواعد الحجز الأساسية
 │   ├── state.policy.ts         # State Machine للحجوزات
+│   ├── payment.policy.ts       # قواعد الدفع والاسترداد
 │   └── snapshot.policy.ts      # قواعد Snapshot
 ├── pricing/
 │   ├── tax.policy.ts           # قواعد الضريبة
@@ -237,19 +238,121 @@ if (!BookingStatePolicy.canCancel(booking.status)) {
 }
 ```
 
-##### `canPay(status: BookingStatus, paymentStatus: PaymentStatus, isExpired: boolean): boolean`
+##### `getValidNextStatuses(status: BookingStatus): BookingStatus[]`
 
-**القاعدة**: التحقق من إمكانية الدفع
+**القاعدة**: الحصول على الحالات التالية الصالحة
 
 **الاستخدام**:
 ```typescript
-if (!BookingStatePolicy.canPay(
-  booking.status,
-  booking.paymentStatus,
-  booking.isExpired()
-)) {
+const validStatuses = BookingStatePolicy.getValidNextStatuses(BookingStatus.PENDING);
+// Returns: [CONFIRMED, CANCELLED, EXPIRED]
+```
+
+##### `getValidTransitions(status: BookingStatus): BookingStatus[]`
+
+**القاعدة**: Alias لـ `getValidNextStatuses()`
+
+**الاستخدام**:
+```typescript
+const transitions = BookingStatePolicy.getValidTransitions(BookingStatus.PENDING);
+// Returns: [CONFIRMED, CANCELLED, EXPIRED]
+```
+
+##### `validateTransition(from: BookingStatus, to: BookingStatus): void`
+
+**القاعدة**: التحقق من الانتقال مع رمي `StateTransitionError` إذا كان غير صالح
+
+**الاستخدام**:
+```typescript
+try {
+  BookingStatePolicy.validateTransition(booking.status, newStatus);
+} catch (error) {
+  // error is StateTransitionError
+  // error.currentStatus = 'pending'
+  // error.targetStatus = 'confirmed'
+  // error.validTransitions = ['confirmed', 'cancelled', 'expired']
+}
+```
+
+---
+
+### PaymentPolicy
+
+**الموقع**: `src/policies/booking/payment.policy.ts`
+
+#### Methods
+
+##### `canPay(booking: IBooking): boolean`
+
+**القاعدة**: التحقق من إمكانية الدفع
+
+**الشروط**:
+- ❌ لا يمكن الدفع إذا كان مدفوعاً بالفعل
+- ❌ لا يمكن الدفع إذا كان ملغياً
+- ❌ لا يمكن الدفع إذا كان منتهي الصلاحية
+
+**الاستخدام**:
+```typescript
+if (!PaymentPolicy.canPay(booking)) {
   throw new ValidationError('Cannot pay for this booking');
 }
+```
+
+##### `validateCanPay(booking: IBooking): void`
+
+**القاعدة**: التحقق من إمكانية الدفع مع رمي `ValidationError` إذا كان غير صالح
+
+**الاستخدام**:
+```typescript
+PaymentPolicy.validateCanPay(booking);
+// Throws ValidationError with specific message if cannot pay
+```
+
+##### `getPaymentStatusAfterPayment(): PaymentStatus`
+
+**القاعدة**: الحصول على حالة الدفع بعد الدفع الناجح
+
+**الاستخدام**:
+```typescript
+booking.paymentStatus = PaymentPolicy.getPaymentStatusAfterPayment();
+// Returns: PaymentStatus.PAID
+```
+
+##### `getBookingStatusAfterPayment(): BookingStatus`
+
+**القاعدة**: الحصول على حالة الحجز بعد الدفع الناجح
+
+**الاستخدام**:
+```typescript
+booking.status = PaymentPolicy.getBookingStatusAfterPayment();
+// Returns: BookingStatus.CONFIRMED
+```
+
+##### `canRefund(paymentStatus: PaymentStatus): boolean`
+
+**القاعدة**: التحقق من إمكانية الاسترداد
+
+**الاستخدام**:
+```typescript
+if (PaymentPolicy.canRefund(booking.paymentStatus)) {
+  // Process refund
+}
+```
+
+##### `getPaymentStatusAfterCancellation(paymentStatus: PaymentStatus): PaymentStatus`
+
+**القاعدة**: الحصول على حالة الدفع بعد الإلغاء
+
+**القواعد**:
+- إذا كان `PAID` → `REFUNDED`
+- إذا كان `UNPAID` → `UNPAID` (لا تغيير)
+- إذا كان `REFUNDED` → `REFUNDED` (لا تغيير)
+
+**الاستخدام**:
+```typescript
+booking.paymentStatus = PaymentPolicy.getPaymentStatusAfterCancellation(
+  booking.paymentStatus
+);
 ```
 
 ---

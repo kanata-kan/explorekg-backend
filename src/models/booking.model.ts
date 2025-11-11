@@ -300,12 +300,29 @@ bookingSchema.methods.isExpired = function (): boolean {
 
 /**
  * Check if booking can be cancelled
+ * Uses BookingStatePolicy for consistency
  */
 bookingSchema.methods.canBeCancelled = function (): boolean {
-  return (
-    this.status === BookingStatus.PENDING ||
-    this.status === BookingStatus.CONFIRMED
-  );
+  const { BookingStatePolicy } = require('../policies');
+  return BookingStatePolicy.canCancel(this.status);
+};
+
+/**
+ * Check if booking can transition to a specific status
+ * Uses BookingStatePolicy for validation
+ */
+bookingSchema.methods.canTransitionTo = function (status: BookingStatus): boolean {
+  const { BookingStatePolicy } = require('../policies');
+  return BookingStatePolicy.canTransition(this.status, status);
+};
+
+/**
+ * Get valid next statuses for this booking
+ * Uses BookingStatePolicy for consistency
+ */
+bookingSchema.methods.getValidNextStatuses = function (): BookingStatus[] {
+  const { BookingStatePolicy } = require('../policies');
+  return BookingStatePolicy.getValidNextStatuses(this.status);
 };
 
 /**

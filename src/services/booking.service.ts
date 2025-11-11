@@ -12,13 +12,14 @@ import { Guest } from '../models/guest.model';
 import TravelPack from '../models/travelPack.model';
 import { Activity } from '../models/activity.model';
 import { Car } from '../models/car.model';
-import { NotFoundError, ValidationError } from '../utils/AppError';
+import { NotFoundError, ValidationError, StateTransitionError } from '../utils/AppError';
 // Business Policy Layer imports
 import {
   BookingPolicy,
   BookingStatePolicy,
   BookingSnapshotPolicy,
   TaxPolicy,
+  PaymentPolicy,
 } from '../policies';
 // Pricing Service imports
 import { calculatePrice } from './pricing.service';
@@ -331,11 +332,8 @@ export const updateBookingStatus = async (
   const booking = await findByBookingNumber(bookingNumber);
 
   // Validate status transition using policy
-  try {
-    BookingStatePolicy.validateTransition(booking.status, status);
-  } catch (error: any) {
-    throw new ValidationError(error.message);
-  }
+  // StateTransitionError will be thrown if invalid
+  BookingStatePolicy.validateTransition(booking.status, status);
 
   booking.status = status;
   await booking.save();
@@ -355,28 +353,12 @@ export const markAsPaid = async (
 ): Promise<IBooking> => {
   const booking = await findByBookingNumber(bookingNumber);
 
-  // Use policy to check if booking can be paid
-  if (
-    !BookingStatePolicy.canPay(
-      booking.status,
-      booking.paymentStatus,
-      booking.isExpired()
-    )
-  ) {
-    if (booking.paymentStatus === PaymentStatus.PAID) {
-      throw new ValidationError('Booking already paid');
-    }
-    if (booking.status === BookingStatus.CANCELLED) {
-      throw new ValidationError('Cannot pay for cancelled booking');
-    }
-    if (booking.isExpired()) {
-      throw new ValidationError('Cannot pay for expired booking');
-    }
-  }
+  // Use PaymentPolicy to validate if booking can be paid
+  PaymentPolicy.validateCanPay(booking);
 
-  // Update payment status
-  booking.paymentStatus = PaymentStatus.PAID;
-  booking.status = BookingStatus.CONFIRMED;
+  // Use PaymentPolicy to get correct statuses after payment
+  booking.paymentStatus = PaymentPolicy.getPaymentStatusAfterPayment();
+  booking.status = PaymentPolicy.getBookingStatusAfterPayment();
   booking.paymentMethod = paymentData.paymentMethod;
   booking.paymentTransactionId = paymentData.paymentTransactionId;
   booking.paidAt = new Date();
@@ -407,14 +389,17 @@ export const cancelBooking = async (
     );
   }
 
+  // Validate state transition
+  BookingStatePolicy.validateTransition(booking.status, BookingStatus.CANCELLED);
+
   booking.status = BookingStatus.CANCELLED;
   booking.cancelledAt = new Date();
   booking.cancellationReason = reason || 'User requested cancellation';
 
-  // If paid, mark for refund
-  if (booking.paymentStatus === PaymentStatus.PAID) {
-    booking.paymentStatus = PaymentStatus.REFUNDED;
-  }
+  // Use PaymentPolicy to get correct payment status after cancellation
+  booking.paymentStatus = PaymentPolicy.getPaymentStatusAfterCancellation(
+    booking.paymentStatus
+  );
 
   await booking.save();
 

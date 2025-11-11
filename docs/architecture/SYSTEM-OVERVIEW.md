@@ -81,6 +81,7 @@
 │  │  - Data transformation                               │  │
 │  │  - External service integration                      │  │
 │  │  - Complex operations orchestration                  │  │
+│  │  - PricingService ⭐ (Unified Pricing)              │  │
 │  └──────────────────┬───────────────────────────────────┘  │
 │                     │ Uses
 │  ┌──────────────────▼───────────────────────────────────┐  │

@@ -8,6 +8,7 @@
 export * from './booking/booking.policy';
 export * from './booking/state.policy';
 export * from './booking/snapshot.policy';
+export * from './booking/payment.policy';
 
 // Pricing Policies
 export * from './pricing/tax.policy';

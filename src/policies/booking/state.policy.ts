@@ -1,5 +1,6 @@
 // src/policies/booking/state.policy.ts
 import { BookingStatus, PaymentStatus } from '../../models/booking.model';
+import { StateTransitionError } from '../../utils/AppError';
 
 /**
  * Booking State Policy
@@ -109,10 +110,19 @@ export class BookingStatePolicy {
   }
 
   /**
+   * Rule: Get valid transitions for a status (alias for getValidNextStatuses)
+   * @param status - Current booking status
+   * @returns Array of valid next statuses
+   */
+  static getValidTransitions(status: BookingStatus): BookingStatus[] {
+    return this.getValidNextStatuses(status);
+  }
+
+  /**
    * Rule: Validate state transition with detailed error message
    * @param from - Current booking status
    * @param to - Target booking status
-   * @throws Error if transition is invalid
+   * @throws StateTransitionError if transition is invalid
    */
   static validateTransition(
     from: BookingStatus,
@@ -120,9 +130,13 @@ export class BookingStatePolicy {
   ): void {
     if (!this.canTransition(from, to)) {
       const validTransitions = this.getValidNextStatuses(from);
-      throw new Error(
+      const validTransitionsStrings = validTransitions.map((s) => s.toString());
+      throw new StateTransitionError(
         `Invalid state transition from "${from}" to "${to}". ` +
-          `Valid transitions from "${from}" are: ${validTransitions.join(', ')}`
+          `Valid transitions from "${from}" are: ${validTransitionsStrings.join(', ')}`,
+        from.toString(),
+        to.toString(),
+        validTransitionsStrings
       );
     }
   }

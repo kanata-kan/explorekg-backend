@@ -73,3 +73,22 @@ export class TooManyRequestsError extends AppError {
     this.retryAfter = retryAfter;
   }
 }
+
+// State transition error
+export class StateTransitionError extends ValidationError {
+  public readonly currentStatus?: string;
+  public readonly targetStatus?: string;
+  public readonly validTransitions?: string[];
+
+  constructor(
+    message: string,
+    currentStatus?: string,
+    targetStatus?: string,
+    validTransitions?: string[]
+  ) {
+    super(message, 'state_transition', 'INVALID_STATE_TRANSITION');
+    this.currentStatus = currentStatus;
+    this.targetStatus = targetStatus;
+    this.validTransitions = validTransitions;
+  }
+}
