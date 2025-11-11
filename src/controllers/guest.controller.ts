@@ -1,7 +1,7 @@
 // src/controllers/guest.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import * as guestService from '../services/guest.service';
-import { dataAccessAuditor } from '../middleware/securityAudit';
+import { dataAccessAuditor } from '../security';
 
 /**
  * Guest Controllers

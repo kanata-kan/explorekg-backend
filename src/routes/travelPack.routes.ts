@@ -9,7 +9,7 @@ import {
   travelPackQuerySchema,
 } from '../validators/travelPack.validator';
 import { detailedPackQuerySchema } from '../validators/packRelation.validator';
-import { asyncHandler } from '../types/middleware/asyncHandler';
+import { asyncHandler } from '../middleware/asyncHandler';
 import {
   authenticate,
   requirePermission,

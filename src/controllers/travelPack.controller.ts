@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as travelPackService from '../services/travelPack.service';
 import * as packRelationService from '../services/packRelation.service';
 import { Types } from 'mongoose';
-import { asyncHandler } from '../types/middleware/asyncHandler';
+import { asyncHandler } from '../middleware/asyncHandler';
 
 /**
  * Controller layer: thin functions that call service layer and return HTTP responses.

@@ -1,22 +1,20 @@
+// ============================================
+// Core Dependencies
+// ============================================
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import pinoHttp from 'pino-http';
-import healthRoute from './routes/health';
-import { languageMiddleware } from './types/middleware/language';
-import { errorHandler } from './middleware/errorHandler';
-import { logger } from './utils/logger';
-import { ENV } from './config/env';
-import travelPackRouter from './routes/travelPack.routes';
-import carRouter from './routes/car.routes';
-import activityRouter from './routes/activity.routes';
-import packRelationRouter from './routes/packRelation.routes';
-import guestRouter from './routes/guest.routes';
-import bookingRouter from './routes/booking.routes';
-import securityRouter from './routes/security.routes';
-import adminRouter from './routes/admin.routes';
 
-// Security middleware imports
+// ============================================
+// Configuration & Utilities
+// ============================================
+import { ENV } from './config/env';
+import { logger } from './utils/logger';
+
+// ============================================
+// Security Middleware (consolidated)
+// ============================================
 import {
   inputSanitizer,
   corsConfig,
@@ -26,16 +24,32 @@ import {
   paymentRateLimit,
   progressiveSlowDown,
   sessionFingerprintValidator,
-} from './middleware/security';
-import { suspiciousActivityDetector } from './middleware/securityAudit';
-import {
+  suspiciousActivityDetector,
   advancedSecurityHeaders,
   advancedHSTS,
   advancedCSP,
   requestComplexityLimiter,
   suspiciousUserAgentDetector,
   honeypotEndpoints,
-} from './middleware/advancedSecurity';
+} from './security';
+
+// ============================================
+// General Middleware
+// ============================================
+import { errorHandler, languageMiddleware } from './middleware';
+
+// ============================================
+// Routes
+// ============================================
+import healthRoute from './routes/health';
+import travelPackRouter from './routes/travelPack.routes';
+import carRouter from './routes/car.routes';
+import activityRouter from './routes/activity.routes';
+import packRelationRouter from './routes/packRelation.routes';
+import guestRouter from './routes/guest.routes';
+import bookingRouter from './routes/booking.routes';
+import securityRouter from './routes/security.routes';
+import adminRouter from './routes/admin.routes';
 
 export const createApp = () => {
   const app = express();

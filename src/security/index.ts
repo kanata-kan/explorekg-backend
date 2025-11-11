@@ -56,3 +56,31 @@ export {
   validateGuestOwnership,
   validateGuestBookingsOwnership,
 } from './ownership.middleware';
+
+// Security Middleware (moved from middleware/)
+export {
+  inputSanitizer,
+  corsConfig,
+  generalRateLimit,
+  strictRateLimit,
+  guestCreationLimit,
+  paymentRateLimit,
+  progressiveSlowDown,
+  sessionFingerprintValidator,
+} from './security';
+
+export {
+  suspiciousActivityDetector,
+  dataAccessAuditor,
+  authFailureTracker,
+  logSecurityEvent,
+} from './securityAudit';
+
+export {
+  advancedSecurityHeaders,
+  advancedHSTS,
+  advancedCSP,
+  requestComplexityLimiter,
+  suspiciousUserAgentDetector,
+  honeypotEndpoints,
+} from './advancedSecurity';
