@@ -28,6 +28,9 @@ import { calculatePrice } from './pricing.service';
 // Availability & Validation imports
 import { DateValidationService } from './dateValidation.service';
 import { AvailabilityService } from './availability.service';
+// Notification imports
+import { NotificationService } from './notification.service';
+import { NotificationType } from '../types/notification.types';
 
 /**
  * Create Booking Data Interface
@@ -353,12 +356,28 @@ export const createBooking = async (
       // Commit transaction
       await session.commitTransaction();
 
-      // TODO: Send email notification (mock)
-      console.log(`📧 [MOCK EMAIL] Booking Confirmation for ${bookingNumber}`);
-      console.log(`   To: ${guest.email}`);
-      console.log(`   Booking: ${snapshot.title}`);
-      console.log(`   Total: ${pricing.totalPrice} ${snapshot.currency}`);
-      console.log(`   Expires: ${booking.expiresAt}`);
+      // Send booking confirmation notification
+      await NotificationService.sendEvent({
+        type: NotificationType.BOOKING_CONFIRMATION,
+        recipient: {
+          email: guest.email,
+          name: guest.fullName,
+          locale: guest.locale,
+        },
+        data: {
+          bookingNumber: booking.bookingNumber,
+          itemName: snapshot.title,
+          startDate: booking.startDate,
+          endDate: booking.endDate,
+          totalAmount: booking.totalPrice,
+          currency: booking.currency,
+          expiresAt: booking.expiresAt,
+        },
+        metadata: {
+          source: 'booking.service.createBooking',
+          correlationId: booking.bookingNumber,
+        },
+      });
 
       return booking;
     } catch (error: any) {
@@ -469,10 +488,29 @@ export const markAsPaid = async (
 
   await booking.save();
 
-  // TODO: Send payment confirmation email (mock)
-  console.log(`📧 [MOCK EMAIL] Payment Confirmation for ${bookingNumber}`);
-  console.log(`   Status: PAID`);
-  console.log(`   Transaction: ${paymentData.paymentTransactionId}`);
+  // Send payment confirmation notification
+  const guest = await Guest.findById(booking.guestId);
+  if (guest) {
+    await NotificationService.sendEvent({
+      type: NotificationType.PAYMENT_CONFIRMATION,
+        recipient: {
+          email: guest.email,
+          name: guest.fullName,
+          locale: guest.locale,
+        },
+        data: {
+          bookingNumber: booking.bookingNumber,
+          amountPaid: booking.totalPrice,
+          currency: booking.currency,
+        paymentDate: new Date(),
+        paymentTransactionId: paymentData.paymentTransactionId,
+      },
+      metadata: {
+        source: 'booking.service.markAsPaid',
+        correlationId: booking.bookingNumber,
+      },
+    });
+  }
 
   return booking;
 };
@@ -507,11 +545,29 @@ export const cancelBooking = async (
 
   await booking.save();
 
-  // TODO: Send cancellation email (mock)
+  // Send cancellation notification
   const guest = await Guest.findById(booking.guestId);
-  console.log(`📧 [MOCK EMAIL] Booking Cancellation for ${bookingNumber}`);
-  console.log(`   To: ${guest?.email || 'N/A'}`);
-  console.log(`   Reason: ${reason || 'User requested'}`);
+  if (guest) {
+    await NotificationService.sendEvent({
+      type: NotificationType.BOOKING_CANCELLATION,
+      recipient: {
+        email: guest.email,
+        name: guest.fullName,
+        locale: guest.locale,
+      },
+      data: {
+        bookingNumber: booking.bookingNumber,
+        cancellationReason: reason || 'User requested',
+        cancellationDate: new Date(),
+        refundAmount: booking.paymentStatus === PaymentStatus.PAID ? booking.totalPrice : undefined,
+        currency: booking.currency,
+      },
+      metadata: {
+        source: 'booking.service.cancelBooking',
+        correlationId: booking.bookingNumber,
+      },
+    });
+  }
 
   return booking;
 };
@@ -529,12 +585,28 @@ export const findActiveBookings = async (): Promise<IBooking[]> => {
 export const cleanExpiredBookings = async (): Promise<number> => {
   const expiredBookings = await Booking.findExpiredUnpaid();
 
-  // Send expiration notifications (mock)
+  // Send expiration notifications
   for (const booking of expiredBookings) {
     const guest = await Guest.findById(booking.guestId);
-    console.log(`📧 [MOCK EMAIL] Booking Expired: ${booking.bookingNumber}`);
-    console.log(`   To: ${guest?.email || 'N/A'}`);
-    console.log(`   Booking has expired after 24 hours without payment`);
+    if (guest) {
+      await NotificationService.sendEvent({
+        type: NotificationType.BOOKING_EXPIRATION,
+        recipient: {
+          email: guest.email,
+          name: guest.fullName,
+          locale: guest.locale,
+        },
+        data: {
+          bookingNumber: booking.bookingNumber,
+          expirationDate: new Date(),
+          expirationReason: 'Payment not received within 24 hours',
+        },
+        metadata: {
+          source: 'booking.service.cleanExpiredBookings',
+          correlationId: booking.bookingNumber,
+        },
+      });
+    }
   }
 
   return Booking.cleanExpired();

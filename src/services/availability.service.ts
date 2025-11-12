@@ -6,6 +6,7 @@ import { Car } from '../models/car.model';
 import { NotFoundError, ValidationError } from '../utils/AppError';
 import { DateValidationService } from './dateValidation.service';
 import { excludeDeleted, isDeleted } from '../utils/softDelete.util';
+import { AvailabilityPolicy } from '../policies/catalog/availability.policy';
 
 /**
  * Availability Service
@@ -20,9 +21,12 @@ export class AvailabilityService {
   /**
    * Check if item is available (not deleted, active status)
    * 
+   * Uses AvailabilityPolicy to centralize availability logic and avoid duplication.
+   * 
    * @param itemType - Type of item (TravelPack, Activity, Car)
    * @param itemId - ID of the item
    * @returns true if item is available, false otherwise
+   * @throws NotFoundError if item is not found or is deleted
    */
   static async checkItemAvailability(
     itemType: BookingItemType,
@@ -30,6 +34,7 @@ export class AvailabilityService {
   ): Promise<boolean> {
     let item: any;
 
+    // Fetch item with soft delete exclusion
     switch (itemType) {
       case BookingItemType.TRAVEL_PACK:
         item = await TravelPack.findOne(
@@ -38,8 +43,7 @@ export class AvailabilityService {
         if (!item || isDeleted(item)) {
           throw new NotFoundError(`TravelPack with id "${itemId}" not found`);
         }
-        // Check if pack is published and available
-        return item.status === 'published' && (item.availability !== false);
+        break;
 
       case BookingItemType.ACTIVITY:
         item = await Activity.findOne(
@@ -48,8 +52,7 @@ export class AvailabilityService {
         if (!item || isDeleted(item)) {
           throw new NotFoundError(`Activity with id "${itemId}" not found`);
         }
-        // Check if activity is active (not deleted)
-        return item.status === 'active';
+        break;
 
       case BookingItemType.CAR:
         item = await Car.findOne(
@@ -58,12 +61,14 @@ export class AvailabilityService {
         if (!item || isDeleted(item)) {
           throw new NotFoundError(`Car with id "${itemId}" not found`);
         }
-        // Check if car is available
-        return item.status === 'available';
+        break;
 
       default:
         throw new ValidationError(`Invalid item type: ${itemType}`);
     }
+
+    // Use AvailabilityPolicy to check availability (centralized logic)
+    return AvailabilityPolicy.isItemAvailable(item, itemType);
   }
 
   /**

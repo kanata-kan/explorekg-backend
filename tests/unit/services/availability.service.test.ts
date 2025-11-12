@@ -5,11 +5,13 @@ import TravelPack from '../../../src/models/travelPack.model';
 import { Activity } from '../../../src/models/activity.model';
 import { Car } from '../../../src/models/car.model';
 import { NotFoundError, ValidationError } from '../../../src/utils/AppError';
+import { AvailabilityPolicy } from '../../../src/policies/catalog/availability.policy';
 
 jest.mock('../../../src/models/booking.model');
 jest.mock('../../../src/models/travelPack.model');
 jest.mock('../../../src/models/activity.model');
 jest.mock('../../../src/models/car.model');
+jest.mock('../../../src/policies/catalog/availability.policy');
 jest.mock('../../../src/services/dateValidation.service', () => ({
   DateValidationService: {
     validateDateRange: jest.fn(),
@@ -35,9 +37,11 @@ describe('AvailabilityService', () => {
         _id: 'pack-123',
         status: 'published',
         availability: true,
+        deletedAt: null,
       };
 
-      (TravelPack.findById as jest.Mock).mockResolvedValue(mockPack);
+      (TravelPack.findOne as jest.Mock).mockResolvedValue(mockPack);
+      (AvailabilityPolicy.isItemAvailable as jest.Mock).mockReturnValue(true);
 
       const result = await AvailabilityService.checkItemAvailability(
         BookingItemType.TRAVEL_PACK,
@@ -45,7 +49,8 @@ describe('AvailabilityService', () => {
       );
 
       expect(result).toBe(true);
-      expect(TravelPack.findById).toHaveBeenCalledWith('pack-123');
+      expect(TravelPack.findOne).toHaveBeenCalled();
+      expect(AvailabilityPolicy.isItemAvailable).toHaveBeenCalledWith(mockPack, BookingItemType.TRAVEL_PACK);
     });
 
     it('should return false for unpublished TravelPack', async () => {
