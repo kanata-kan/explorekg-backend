@@ -283,6 +283,36 @@ bookingSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL for exp
 bookingSchema.index({ guestId: 1, status: 1 });
 bookingSchema.index({ status: 1, paymentStatus: 1 });
 
+// Compound index for overlap detection queries (optimizes checkOverlappingBookings)
+// This index supports queries filtering by itemType, itemId, status, and date ranges
+bookingSchema.index(
+  {
+    'snapshot.itemType': 1,
+    'snapshot.itemId': 1,
+    startDate: 1,
+    endDate: 1,
+    status: 1,
+  },
+  {
+    name: 'overlap_detection_idx',
+    background: true,
+  }
+);
+
+// Additional index for date range queries
+bookingSchema.index(
+  {
+    'snapshot.itemType': 1,
+    'snapshot.itemId': 1,
+    status: 1,
+    startDate: 1,
+  },
+  {
+    name: 'availability_check_idx',
+    background: true,
+  }
+);
+
 /**
  * Instance Methods
  */

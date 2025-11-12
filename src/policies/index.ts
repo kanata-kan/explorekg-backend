@@ -18,3 +18,6 @@ export * from './pricing/deposit.policy';
 // Guest Policies
 export * from './guest/guest.policy';
 
+// Catalog Policies
+export * from './catalog/availability.policy';
+

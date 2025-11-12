@@ -1,7 +1,7 @@
 // Error handling middleware
 
 import { Request, Response, NextFunction } from 'express';
-import { AppError, ValidationError, DatabaseError } from '../utils/AppError';
+import { AppError, ValidationError, DatabaseError, DatesOverlapError, ConflictError } from '../utils/AppError';
 import { ENV } from '../config/env';
 import { logger } from '../utils/logger';
 
@@ -49,7 +49,7 @@ export function errorHandler(
     error = new AppError('Internal Server Error', 500, false);
   }
 
-  const response = {
+  const response: any = {
     success: false,
     error: error.message,
     statusCode: error.statusCode,
@@ -63,6 +63,27 @@ export function errorHandler(
       error.field && { field: error.field }),
     ...(error instanceof ValidationError && error.code && { code: error.code }),
   };
+
+  // Handle DatesOverlapError with structured response (HTTP 409 Conflict)
+  if (error instanceof DatesOverlapError) {
+    response.error = 'DatesOverlap';
+    response.message = error.message;
+    if (error.conflictingBookings) {
+      response.conflictingBookings = error.conflictingBookings;
+    }
+    if (error.suggestedAlternatives) {
+      response.suggestedAlternatives = error.suggestedAlternatives;
+    }
+  }
+
+  // Handle ConflictError (HTTP 409)
+  if (error instanceof ConflictError && !(error instanceof DatesOverlapError)) {
+    response.error = 'Conflict';
+    response.message = error.message;
+    if (error.field) {
+      response.field = error.field;
+    }
+  }
 
   res.status(error.statusCode).json(response);
 }

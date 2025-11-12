@@ -12,7 +12,8 @@ import { Guest } from '../models/guest.model';
 import TravelPack from '../models/travelPack.model';
 import { Activity } from '../models/activity.model';
 import { Car } from '../models/car.model';
-import { NotFoundError, ValidationError, StateTransitionError } from '../utils/AppError';
+import { NotFoundError, ValidationError, StateTransitionError, DatesOverlapError } from '../utils/AppError';
+import mongoose from 'mongoose';
 // Business Policy Layer imports
 import {
   BookingPolicy,
@@ -23,6 +24,9 @@ import {
 } from '../policies';
 // Pricing Service imports
 import { calculatePrice } from './pricing.service';
+// Availability & Validation imports
+import { DateValidationService } from './dateValidation.service';
+import { AvailabilityService } from './availability.service';
 
 /**
  * Create Booking Data Interface
@@ -217,35 +221,117 @@ export const createBooking = async (
       throw new ValidationError('Guest session has expired');
     }
 
-    // Generate unique booking number
-    const bookingNumber = await BookingCounter.getNextBookingNumber();
-
-    // Create snapshot of the booked item
-    const snapshot = await createBookingSnapshot(
+    // Check item availability
+    const isAvailable = await AvailabilityService.checkItemAvailability(
       data.itemType,
-      data.itemId,
-      data.locale || guest.locale || 'en'
+      data.itemId
     );
 
-    // Validate snapshot using policy
-    BookingSnapshotPolicy.validateSnapshot(snapshot);
+    if (!isAvailable) {
+      throw new ValidationError('Item is not available for booking');
+    }
 
-    // Calculate pricing
-    const pricing = calculateBookingPrice(snapshot, data);
+    // Auto-calculate endDate from startDate + numberOfDays if needed
+    // This implements the requirement: "العميل يختار باقة ديال 5 أيام مثلاً، ويحدد تاريخ البداية.
+    // النظام أوتوماتيكياً كيحسب تاريخ النهاية"
+    let { startDate, endDate } = DateValidationService.autoCalculateDates(
+      data.startDate,
+      data.endDate,
+      data.numberOfDays
+    );
 
-    // Calculate expiration date using policy (24 hours from now)
-    const expiresAt = BookingPolicy.calculateExpirationDate();
+    // Validate dates if provided
+    if (startDate && endDate) {
+      // Validate date range
+      DateValidationService.validateDateRange(startDate, endDate);
 
-    // Create booking
-    const booking = new Booking({
+      // Validate that start date is in the future (allow today)
+      DateValidationService.validateFutureDate(startDate, true);
+    }
+
+    // Start MongoDB transaction for atomic booking creation
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // Check for overlapping bookings INSIDE transaction (atomic check)
+      if (startDate && endDate) {
+        const hasOverlap = await AvailabilityService.checkOverlappingBookings(
+          data.itemType,
+          data.itemId,
+          startDate,
+          endDate,
+          undefined,
+          session
+        );
+
+        if (hasOverlap) {
+          // Get overlapping bookings for error message
+          const overlappingBookings = await AvailabilityService.getOverlappingBookings(
+            data.itemType,
+            data.itemId,
+            startDate,
+            endDate,
+            undefined,
+            session
+          );
+
+          // Suggest alternative dates
+          let alternativeDates: Array<{ startDate: Date; endDate: Date; gapSizeDays: number }> = [];
+          if (data.numberOfDays) {
+            alternativeDates = await AvailabilityService.suggestAlternativeDates(
+              data.itemType,
+              data.itemId,
+              startDate,
+              data.numberOfDays,
+              30 // Look ahead 30 days
+            );
+          }
+
+          // Build structured error response
+          const conflictingBookings = overlappingBookings.map((b) => ({
+            bookingNumber: b.bookingNumber,
+            startDate: b.startDate!,
+            endDate: b.endDate!,
+          }));
+
+          throw new DatesOverlapError(
+            'The selected dates overlap with an existing booking.',
+            conflictingBookings,
+            alternativeDates
+          );
+        }
+      }
+
+      // Generate unique booking number (inside transaction)
+      const bookingNumber = await BookingCounter.getNextBookingNumber(undefined, session);
+
+      // Create snapshot of the booked item
+      const snapshot = await createBookingSnapshot(
+        data.itemType,
+        data.itemId,
+        data.locale || guest.locale || 'en'
+      );
+
+      // Validate snapshot using policy
+      BookingSnapshotPolicy.validateSnapshot(snapshot);
+
+      // Calculate pricing
+      const pricing = calculateBookingPrice(snapshot, data);
+
+      // Calculate expiration date using policy (24 hours from now)
+      const expiresAt = BookingPolicy.calculateExpirationDate();
+
+      // Create booking (inside transaction)
+      const booking = new Booking({
       bookingNumber,
       guestId: data.guestId,
       snapshot,
       numberOfPersons: data.numberOfPersons,
       numberOfUnits: data.numberOfUnits,
       numberOfDays: data.numberOfDays,
-      startDate: data.startDate,
-      endDate: data.endDate,
+      startDate: startDate || data.startDate, // Use calculated dates
+      endDate: endDate || data.endDate,
       ...pricing,
       currency: snapshot.currency,
       status: BookingStatus.PENDING,
@@ -254,17 +340,28 @@ export const createBooking = async (
       metadata: data.metadata,
     });
 
-    // expiresAt is now explicitly set
-    await booking.save();
+      // expiresAt is now explicitly set
+      await booking.save({ session });
 
-    // TODO: Send email notification (mock)
-    console.log(`📧 [MOCK EMAIL] Booking Confirmation for ${bookingNumber}`);
-    console.log(`   To: ${guest.email}`);
-    console.log(`   Booking: ${snapshot.title}`);
-    console.log(`   Total: ${pricing.totalPrice} ${snapshot.currency}`);
-    console.log(`   Expires: ${booking.expiresAt}`);
+      // Commit transaction
+      await session.commitTransaction();
 
-    return booking;
+      // TODO: Send email notification (mock)
+      console.log(`📧 [MOCK EMAIL] Booking Confirmation for ${bookingNumber}`);
+      console.log(`   To: ${guest.email}`);
+      console.log(`   Booking: ${snapshot.title}`);
+      console.log(`   Total: ${pricing.totalPrice} ${snapshot.currency}`);
+      console.log(`   Expires: ${booking.expiresAt}`);
+
+      return booking;
+    } catch (error: any) {
+      // Rollback transaction on error
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      // End session
+      session.endSession();
+    }
   } catch (error: any) {
     if (error.name === 'CastError') {
       throw new ValidationError('Invalid ID format');

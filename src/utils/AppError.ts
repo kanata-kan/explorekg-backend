@@ -92,3 +92,35 @@ export class StateTransitionError extends ValidationError {
     this.validTransitions = validTransitions;
   }
 }
+
+// Dates overlap error (HTTP 409 Conflict)
+export class DatesOverlapError extends ConflictError {
+  public readonly conflictingBookings?: Array<{
+    bookingNumber: string;
+    startDate: Date;
+    endDate: Date;
+  }>;
+  public readonly suggestedAlternatives?: Array<{
+    startDate: Date;
+    endDate: Date;
+    gapSizeDays: number;
+  }>;
+
+  constructor(
+    message: string,
+    conflictingBookings?: Array<{
+      bookingNumber: string;
+      startDate: Date;
+      endDate: Date;
+    }>,
+    suggestedAlternatives?: Array<{
+      startDate: Date;
+      endDate: Date;
+      gapSizeDays: number;
+    }>
+  ) {
+    super(message, 'dates_overlap');
+    this.conflictingBookings = conflictingBookings;
+    this.suggestedAlternatives = suggestedAlternatives;
+  }
+}
