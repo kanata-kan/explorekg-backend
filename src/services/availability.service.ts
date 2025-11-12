@@ -5,6 +5,7 @@ import { Activity } from '../models/activity.model';
 import { Car } from '../models/car.model';
 import { NotFoundError, ValidationError } from '../utils/AppError';
 import { DateValidationService } from './dateValidation.service';
+import { excludeDeleted, isDeleted } from '../utils/softDelete.util';
 
 /**
  * Availability Service
@@ -31,24 +32,30 @@ export class AvailabilityService {
 
     switch (itemType) {
       case BookingItemType.TRAVEL_PACK:
-        item = await TravelPack.findById(itemId);
-        if (!item) {
+        item = await TravelPack.findOne(
+          excludeDeleted({ _id: itemId })
+        );
+        if (!item || isDeleted(item)) {
           throw new NotFoundError(`TravelPack with id "${itemId}" not found`);
         }
         // Check if pack is published and available
         return item.status === 'published' && (item.availability !== false);
 
       case BookingItemType.ACTIVITY:
-        item = await Activity.findById(itemId);
-        if (!item) {
+        item = await Activity.findOne(
+          excludeDeleted({ _id: itemId })
+        );
+        if (!item || isDeleted(item)) {
           throw new NotFoundError(`Activity with id "${itemId}" not found`);
         }
         // Check if activity is active (not deleted)
         return item.status === 'active';
 
       case BookingItemType.CAR:
-        item = await Car.findById(itemId);
-        if (!item) {
+        item = await Car.findOne(
+          excludeDeleted({ _id: itemId })
+        );
+        if (!item || isDeleted(item)) {
           throw new NotFoundError(`Car with id "${itemId}" not found`);
         }
         // Check if car is available

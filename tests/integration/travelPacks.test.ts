@@ -384,7 +384,7 @@ describe('Travel Packs API', () => {
       });
     });
 
-    it('should archive travel pack (soft delete)', async () => {
+    it('should archive travel pack (soft delete - set deletedAt)', async () => {
       const response = await request(app)
         .delete(`/api/v1/travel-packs/${travelPack._id}`)
         .expect(200);
@@ -392,9 +392,16 @@ describe('Travel Packs API', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.message).toContain('archived');
 
-      // Verify the pack is archived
+      // Verify the pack still exists but is soft-deleted (has deletedAt)
       const archivedPack = await TravelPack.findById(travelPack._id);
-      expect(archivedPack?.status).toBe('archived');
+      expect(archivedPack).toBeDefined();
+      expect(archivedPack?.deletedAt).toBeDefined();
+      expect(archivedPack?.deletedAt).toBeInstanceOf(Date);
+      
+      // Verify pack is excluded from normal queries
+      const { excludeDeleted } = await import('../../src/utils/softDelete.util');
+      const foundPack = await TravelPack.findOne(excludeDeleted({ _id: travelPack._id }));
+      expect(foundPack).toBeNull();
     });
 
     it('should return 404 for non-existent travel pack', async () => {

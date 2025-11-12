@@ -520,7 +520,7 @@ describe('Cars API', () => {
       carId = car._id.toString();
     });
 
-    it('should soft delete car (set status to inactive)', async () => {
+    it('should soft delete car (set deletedAt)', async () => {
       const response = await request(app)
         .delete(`/api/v1/cars/${carId}`)
         .expect(200);
@@ -528,10 +528,16 @@ describe('Cars API', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.message).toBe('Car archived successfully');
 
-      // Verify car still exists but is inactive
+      // Verify car still exists but is soft-deleted (has deletedAt)
       const car = await Car.findById(carId);
       expect(car).toBeDefined();
-      expect(car?.status).toBe('inactive');
+      expect(car?.deletedAt).toBeDefined();
+      expect(car?.deletedAt).toBeInstanceOf(Date);
+      
+      // Verify car is excluded from normal queries
+      const { excludeDeleted } = await import('../../src/utils/softDelete.util');
+      const foundCar = await Car.findOne(excludeDeleted({ _id: carId }));
+      expect(foundCar).toBeNull();
     });
 
     it('should return 404 for non-existent car', async () => {

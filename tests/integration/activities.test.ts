@@ -514,7 +514,7 @@ describe('Activities API Integration Tests', () => {
       activityId = activity._id.toString();
     });
 
-    it('should soft delete activity', async () => {
+    it('should soft delete activity (set deletedAt)', async () => {
       const response = await request(app)
         .delete(`/api/v1/activities/${activityId}`)
         .expect(200);
@@ -522,9 +522,16 @@ describe('Activities API Integration Tests', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.message).toBe('Activity archived successfully');
 
-      // Verify activity is marked as inactive
+      // Verify activity still exists but is soft-deleted (has deletedAt)
       const activity = await Activity.findById(activityId);
-      expect(activity?.status).toBe('inactive');
+      expect(activity).toBeDefined();
+      expect(activity?.deletedAt).toBeDefined();
+      expect(activity?.deletedAt).toBeInstanceOf(Date);
+      
+      // Verify activity is excluded from normal queries
+      const { excludeDeleted } = await import('../../src/utils/softDelete.util');
+      const foundActivity = await Activity.findOne(excludeDeleted({ _id: activityId }));
+      expect(foundActivity).toBeNull();
     });
 
     it('should return 404 for non-existent activity', async () => {

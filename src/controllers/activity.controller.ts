@@ -100,7 +100,7 @@ export const updateActivity = async (
 
 /**
  * DELETE /api/v1/activities/:id
- * Soft delete an activity (set status to inactive)
+ * Soft delete an activity (set deletedAt)
  */
 export const deleteActivity = async (
   req: Request,

@@ -13,6 +13,7 @@ import TravelPack from '../models/travelPack.model';
 import { Activity } from '../models/activity.model';
 import { Car } from '../models/car.model';
 import { NotFoundError, ValidationError, StateTransitionError, DatesOverlapError } from '../utils/AppError';
+import { excludeDeleted, isDeleted } from '../utils/softDelete.util';
 import mongoose from 'mongoose';
 // Business Policy Layer imports
 import {
@@ -74,9 +75,11 @@ const createTravelPackSnapshot = async (
   packId: string,
   locale: string = 'en'
 ): Promise<BookingSnapshot> => {
-  const pack = await TravelPack.findById(packId);
+  const pack = await TravelPack.findOne(
+    excludeDeleted({ _id: packId })
+  );
 
-  if (!pack) {
+  if (!pack || isDeleted(pack)) {
     throw new NotFoundError(`TravelPack with id "${packId}" not found`);
   }
 
@@ -105,9 +108,11 @@ const createActivitySnapshot = async (
   activityId: string,
   locale: string = 'en'
 ): Promise<BookingSnapshot> => {
-  const activity = await Activity.findById(activityId);
+  const activity = await Activity.findOne(
+    excludeDeleted({ _id: activityId })
+  );
 
-  if (!activity) {
+  if (!activity || isDeleted(activity)) {
     throw new NotFoundError(`Activity with id "${activityId}" not found`);
   }
 
@@ -133,9 +138,11 @@ const createCarSnapshot = async (
   carId: string,
   locale: string = 'en'
 ): Promise<BookingSnapshot> => {
-  const car = await Car.findById(carId);
+  const car = await Car.findOne(
+    excludeDeleted({ _id: carId })
+  );
 
-  if (!car) {
+  if (!car || isDeleted(car)) {
     throw new NotFoundError(`Car with id "${carId}" not found`);
   }
 

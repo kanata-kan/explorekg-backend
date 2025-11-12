@@ -3,6 +3,7 @@ import TravelPack, { ITravelPack } from '../models/travelPack.model';
 import { Types } from 'mongoose';
 import { NotFoundError, ValidationError } from '../utils/AppError';
 import { ENV } from '../config/env';
+import { excludeDeleted, markAsDeleted, isDeleted } from '../utils/softDelete.util';
 
 type FindFilters = {
   locale?: string | null;
@@ -45,9 +46,7 @@ export const findMany = async (
   const skip = (validatedPage - 1) * validatedLimit;
 
   // Build optimized query
-  const query: any = {
-    deletedAt: { $exists: false }, // Exclude soft deleted items by default
-  };
+  const query: any = {};
 
   // Basic filters
   if (filters.status) query.status = filters.status;
@@ -86,6 +85,9 @@ export const findMany = async (
     }
   }
 
+  // Exclude soft-deleted items by default
+  const finalQuery = excludeDeleted(query);
+
   // Build sort object
   const sortObj: any = {};
   if (sort.startsWith('-')) {
@@ -100,13 +102,13 @@ export const findMany = async (
   }
 
   const [items, total] = await Promise.all([
-    TravelPack.find(query)
+    TravelPack.find(finalQuery)
       .sort(sortObj)
       .skip(skip)
       .limit(validatedLimit)
       .select('-__v') // Exclude version key for cleaner response
       .lean(),
-    TravelPack.countDocuments(query),
+    TravelPack.countDocuments(finalQuery),
   ]);
 
   return {
@@ -125,24 +127,27 @@ export const findMany = async (
 
 /**
  * Enhanced findByIdOrSlug with better error handling and performance
+ * Excludes soft-deleted packs by default
  */
 export const findByIdOrSlug = async (idOrSlug: string) => {
   if (!idOrSlug?.trim()) {
     throw new ValidationError('ID or slug is required');
   }
 
-  const baseFilter = { deletedAt: { $exists: false } }; // Exclude soft deleted items
-
   // Try ObjectId first (faster lookup)
   if (Types.ObjectId.isValid(idOrSlug)) {
-    const doc = await TravelPack.findOne({ _id: idOrSlug, ...baseFilter })
+    const doc = await TravelPack.findOne(
+      excludeDeleted({ _id: idOrSlug })
+    )
       .select('-__v')
       .lean();
     if (doc) return doc;
   }
 
   // Fallback to slug lookup
-  const doc = await TravelPack.findOne({ slug: idOrSlug, ...baseFilter })
+  const doc = await TravelPack.findOne(
+    excludeDeleted({ slug: idOrSlug })
+  )
     .select('-__v')
     .lean();
 
@@ -188,12 +193,11 @@ export const updateByIdOrSlug = async (
 
   // Remove fields that shouldn't be updated
   const { createdAt, updatedAt, ...updatePayload } = payload;
-  const baseFilter = { deletedAt: { $exists: false } }; // Exclude soft deleted items
 
   // Try by ObjectId first
   if (Types.ObjectId.isValid(idOrSlug)) {
     const doc = await TravelPack.findOneAndUpdate(
-      { _id: idOrSlug, ...baseFilter },
+      excludeDeleted({ _id: idOrSlug }),
       updatePayload,
       {
         new: true,
@@ -208,7 +212,7 @@ export const updateByIdOrSlug = async (
 
   // Fallback to slug
   const doc = await TravelPack.findOneAndUpdate(
-    { slug: idOrSlug, ...baseFilter },
+    excludeDeleted({ slug: idOrSlug }),
     updatePayload,
     { new: true, runValidators: true }
   )
@@ -220,23 +224,28 @@ export const updateByIdOrSlug = async (
 
 /**
  * Enhanced soft delete with validation
+ * Marks pack as deleted by setting deletedAt to current date
  */
 export const archiveByIdOrSlug = async (idOrSlug: string): Promise<boolean> => {
   if (!idOrSlug?.trim()) {
     throw new ValidationError('ID or slug is required');
   }
 
-  const baseFilter = { deletedAt: { $exists: false } }; // Exclude already deleted items
+  // Find pack first to check if it exists and is not already deleted
+  const pack = await findByIdOrSlug(idOrSlug);
+  if (!pack || isDeleted(pack as any)) {
+    throw new NotFoundError('Travel pack not found or already deleted');
+  }
 
   const updateResult = Types.ObjectId.isValid(idOrSlug)
     ? await TravelPack.findOneAndUpdate(
-        { _id: idOrSlug, ...baseFilter },
-        { status: 'archived', updatedAt: new Date() },
+        { _id: idOrSlug },
+        markAsDeleted(),
         { new: true }
       )
     : await TravelPack.findOneAndUpdate(
-        { slug: idOrSlug, ...baseFilter },
-        { status: 'archived', updatedAt: new Date() },
+        { slug: idOrSlug },
+        markAsDeleted(),
         { new: true }
       );
 
@@ -244,24 +253,24 @@ export const archiveByIdOrSlug = async (idOrSlug: string): Promise<boolean> => {
 };
 
 /**
- * Get travel pack statistics for analytics
+ * Get travel pack statistics for analytics (excluding soft-deleted)
  */
 export const getStatistics = async () => {
-  const baseFilter = { deletedAt: { $exists: false } }; // Exclude soft deleted items
+  const softDeleteFilter = { deletedAt: { $exists: false } };
 
   const [statusStats, availabilityStats, priceStats] = await Promise.all([
     TravelPack.aggregate([
-      { $match: baseFilter },
+      { $match: softDeleteFilter },
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ]),
     TravelPack.aggregate([
-      { $match: baseFilter },
+      { $match: softDeleteFilter },
       { $group: { _id: '$availability', count: { $sum: 1 } } },
     ]),
     TravelPack.aggregate([
       {
         $match: {
-          ...baseFilter,
+          ...softDeleteFilter,
           basePrice: { $exists: true, $ne: null },
         },
       },
@@ -290,7 +299,7 @@ export const getStatistics = async () => {
 };
 
 /**
- * Find all translation versions by localeGroupId
+ * Find all translation versions by localeGroupId (excluding soft-deleted)
  * @param localeGroupId - The locale group identifier
  * @returns Array of travel packs with the same localeGroupId
  */
@@ -299,10 +308,9 @@ export const findByLocaleGroupId = async (localeGroupId: string) => {
     throw new ValidationError('localeGroupId is required');
   }
 
-  const packs = await TravelPack.find({
-    localeGroupId,
-    deletedAt: { $exists: false },
-  })
+  const packs = await TravelPack.find(
+    excludeDeleted({ localeGroupId })
+  )
     .select('-__v')
     .lean();
 

@@ -35,6 +35,7 @@ export interface ITravelPack extends Document {
   currency?: string; // ISO currency code, e.g. "USD"
   availability?: boolean; // general availability flag
   createdBy?: mongoose.Types.ObjectId | null;
+  deletedAt?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -101,6 +102,11 @@ const TravelPackSchema = new Schema<ITravelPack>(
     currency: { type: String, default: 'USD' },
     availability: { type: Boolean, default: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    deletedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true, // createdAt, updatedAt
@@ -129,6 +135,8 @@ TravelPackSchema.index({ status: 1, locale: 1 }); // Filter by status and locale
 TravelPackSchema.index({ status: 1, createdAt: -1 }); // Latest published packs
 TravelPackSchema.index({ availability: 1, status: 1 }); // Available published packs
 TravelPackSchema.index({ createdBy: 1, status: 1 }); // User's packs by status
+// Compound index for active, non-deleted packs
+TravelPackSchema.index({ status: 1, deletedAt: 1 });
 
 // Text index for search functionality (improved performance over regex)
 TravelPackSchema.index(

@@ -29,6 +29,7 @@ export interface IActivity extends Document {
   availabilityStatus: 'available' | 'unavailable';
   tags: string[];
   packIds: Schema.Types.ObjectId[];
+  deletedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 
@@ -190,6 +191,11 @@ const ActivitySchema = new Schema<IActivity>(
         ref: 'TravelPack',
       },
     ],
+    deletedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -223,6 +229,10 @@ ActivitySchema.index({ status: 1, locale: 1 });
 
 // Index for availability queries
 ActivitySchema.index({ availabilityStatus: 1 });
+
+// Index for soft delete (deletedAt is already indexed in schema definition)
+// Compound index for active, non-deleted activities
+ActivitySchema.index({ status: 1, deletedAt: 1 });
 
 // Text index for search functionality
 ActivitySchema.index({ name: 'text', description: 'text', location: 'text' });
@@ -293,12 +303,13 @@ ActivitySchema.pre('save', function (next) {
 // ==================== STATIC METHODS ====================
 
 /**
- * Find all available activities
+ * Find all available activities (excluding soft-deleted)
  */
 ActivitySchema.statics.findAvailable = function (locale?: 'en' | 'fr') {
   const query: any = {
     status: 'active',
     availabilityStatus: 'available',
+    deletedAt: { $exists: false },
   };
 
   if (locale) {
@@ -309,10 +320,14 @@ ActivitySchema.statics.findAvailable = function (locale?: 'en' | 'fr') {
 };
 
 /**
- * Find activities by locale
+ * Find activities by locale (excluding soft-deleted)
  */
 ActivitySchema.statics.findByLocale = function (locale: 'en' | 'fr') {
-  return this.find({ locale, status: 'active' }).sort({ createdAt: -1 });
+  return this.find({ 
+    locale, 
+    status: 'active',
+    deletedAt: { $exists: false },
+  }).sort({ createdAt: -1 });
 };
 
 // ==================== INSTANCE METHODS ====================

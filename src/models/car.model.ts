@@ -35,6 +35,7 @@ export interface ICar extends Document {
   status: 'active' | 'inactive' | 'maintenance';
   availabilityStatus: 'available' | 'reserved' | 'unavailable';
   packIds?: Schema.Types.ObjectId[];
+  deletedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -217,6 +218,13 @@ const carSchema = new Schema<ICar>(
       ref: 'TravelPack',
       default: [],
     },
+
+    // Soft delete field
+    deletedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
   },
   {
     // Schema options
@@ -261,6 +269,9 @@ carSchema.index({ createdAt: -1 });
 
 // Sparse index for cars with associated packs
 carSchema.index({ packIds: 1 }, { sparse: true });
+
+// Compound index for active, non-deleted cars
+carSchema.index({ status: 1, deletedAt: 1 });
 
 /**
  * Pre-save middleware
@@ -309,21 +320,26 @@ carSchema.virtual('dailyRate').get(function () {
 
 /**
  * Static method: findAvailable
- * Returns all cars that are available for booking
+ * Returns all cars that are available for booking (excluding soft-deleted)
  */
 carSchema.statics.findAvailable = function () {
   return this.find({
     status: 'active',
     availabilityStatus: 'available',
+    deletedAt: { $exists: false },
   });
 };
 
 /**
  * Static method: findByLocale
- * Returns cars filtered by locale
+ * Returns cars filtered by locale (excluding soft-deleted)
  */
 carSchema.statics.findByLocale = function (locale: 'en' | 'fr') {
-  return this.find({ locale, status: 'active' });
+  return this.find({ 
+    locale, 
+    status: 'active',
+    deletedAt: { $exists: false },
+  });
 };
 
 /**

@@ -100,7 +100,7 @@ export const updateCar = async (
 
 /**
  * DELETE /api/v1/cars/:id
- * Soft delete a car (set status to inactive)
+ * Soft delete a car (set deletedAt)
  */
 export const deleteCar = async (
   req: Request,

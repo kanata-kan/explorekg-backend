@@ -3,6 +3,7 @@ import { Car, ICar } from '../models/car.model';
 import { Types } from 'mongoose';
 import { NotFoundError, ValidationError } from '../utils/AppError';
 import { ENV } from '../config/env';
+import { excludeDeleted, markAsDeleted, isDeleted } from '../utils/softDelete.util';
 
 type FindFilters = {
   locale?: string | null;
@@ -99,14 +100,17 @@ export const findMany = async (
     sortObj.score = { $meta: 'textScore' };
   }
 
+  // Exclude soft-deleted cars by default
+  const finalQuery = excludeDeleted(query);
+
   const [items, total] = await Promise.all([
-    Car.find(query)
+    Car.find(finalQuery)
       .sort(sortObj)
       .skip(skip)
       .limit(validatedLimit)
       .lean()
       .exec(),
-    Car.countDocuments(query).exec(),
+    Car.countDocuments(finalQuery).exec(),
   ]);
 
   return {
@@ -127,7 +131,7 @@ export const findMany = async (
 };
 
 /**
- * Find car by ID or slug
+ * Find car by ID or slug (excluding soft-deleted)
  */
 export const findById = async (id: string): Promise<ICar> => {
   // Check if ID is a valid MongoDB ObjectId
@@ -136,17 +140,21 @@ export const findById = async (id: string): Promise<ICar> => {
   let car: ICar | null = null;
 
   if (isValidObjectId) {
-    // Try to find by ObjectId
-    car = await Car.findById(id).exec();
+    // Try to find by ObjectId (exclude soft-deleted)
+    car = await Car.findOne(
+      excludeDeleted({ _id: id })
+    ).exec();
   }
 
   // If not found by ObjectId, try to find by slug (metadata.path)
   if (!car) {
     const pathQuery = `/cars/${id}`;
-    car = await Car.findOne({ 'metadata.path': pathQuery }).exec();
+    car = await Car.findOne(
+      excludeDeleted({ 'metadata.path': pathQuery })
+    ).exec();
   }
 
-  if (!car) {
+  if (!car || isDeleted(car)) {
     throw new NotFoundError('Car not found');
   }
 
@@ -155,15 +163,17 @@ export const findById = async (id: string): Promise<ICar> => {
 
 /**
  * Find all language versions of a car by localeGroupId
- * Returns all translations (EN, FR) for the same car
+ * Returns all translations (EN, FR) for the same car (excluding soft-deleted)
  */
 export const findByLocaleGroupId = async (
   localeGroupId: string
 ): Promise<ICar[]> => {
-  const cars = await Car.find({
-    localeGroupId,
-    status: 'active',
-  })
+  const cars = await Car.find(
+    excludeDeleted({
+      localeGroupId,
+      status: 'active',
+    })
+  )
     .sort({ locale: 1 })
     .exec();
 
@@ -206,6 +216,9 @@ export const update = async (
     throw new ValidationError('Invalid car ID format');
   }
 
+  // Find car first to ensure it exists and is not deleted
+  const existingCar = await findById(id);
+  
   // Find and update car
   const car = await Car.findByIdAndUpdate(id, updateData, {
     new: true,
@@ -220,28 +233,27 @@ export const update = async (
 };
 
 /**
- * Delete a car (soft delete by setting status to inactive)
+ * Delete a car (soft delete by setting deletedAt to current date)
  */
 export const remove = async (id: string): Promise<void> => {
-  // Check if ID is valid
-  if (!Types.ObjectId.isValid(id)) {
-    throw new ValidationError('Invalid car ID format');
+  // Find car first to check if it exists and is not already deleted
+  const car = await findById(id);
+  
+  // Check if already deleted
+  if (isDeleted(car)) {
+    throw new ValidationError('Car is already deleted');
   }
 
-  // Soft delete by changing status to inactive
-  const car = await Car.findByIdAndUpdate(
+  // Mark as deleted
+  await Car.findByIdAndUpdate(
     id,
-    { status: 'inactive' },
+    markAsDeleted(),
     { new: true }
   ).exec();
-
-  if (!car) {
-    throw new NotFoundError('Car not found');
-  }
 };
 
 /**
- * Get available cars for booking
+ * Get available cars for booking (excluding soft-deleted)
  */
 export const findAvailable = async (locale?: 'en' | 'fr') => {
   const query: any = {
@@ -253,25 +265,29 @@ export const findAvailable = async (locale?: 'en' | 'fr') => {
     query.locale = locale;
   }
 
-  return await Car.find(query).lean().exec();
+  return await Car.find(excludeDeleted(query)).lean().exec();
 };
 
 /**
- * Get cars by locale
+ * Get cars by locale (excluding soft-deleted)
  */
 export const findByLocale = async (locale: 'en' | 'fr') => {
-  return await Car.find({
-    locale,
-    status: 'active',
-  })
+  return await Car.find(
+    excludeDeleted({
+      locale,
+      status: 'active',
+    })
+  )
     .lean()
     .exec();
 };
 
 /**
- * Get statistics about cars
+ * Get statistics about cars (excluding soft-deleted)
  */
 export const getStatistics = async () => {
+  const softDeleteFilter = { deletedAt: { $exists: false } };
+  
   const [
     total,
     active,
@@ -282,14 +298,15 @@ export const getStatistics = async () => {
     unavailable,
     priceStats,
   ] = await Promise.all([
-    Car.countDocuments({}),
-    Car.countDocuments({ status: 'active' }),
-    Car.countDocuments({ status: 'inactive' }),
-    Car.countDocuments({ status: 'maintenance' }),
-    Car.countDocuments({ availabilityStatus: 'available' }),
-    Car.countDocuments({ availabilityStatus: 'reserved' }),
-    Car.countDocuments({ availabilityStatus: 'unavailable' }),
+    Car.countDocuments(softDeleteFilter),
+    Car.countDocuments({ ...softDeleteFilter, status: 'active' }),
+    Car.countDocuments({ ...softDeleteFilter, status: 'inactive' }),
+    Car.countDocuments({ ...softDeleteFilter, status: 'maintenance' }),
+    Car.countDocuments({ ...softDeleteFilter, availabilityStatus: 'available' }),
+    Car.countDocuments({ ...softDeleteFilter, availabilityStatus: 'reserved' }),
+    Car.countDocuments({ ...softDeleteFilter, availabilityStatus: 'unavailable' }),
     Car.aggregate([
+      { $match: softDeleteFilter },
       {
         $group: {
           _id: null,
@@ -328,9 +345,8 @@ export const updateAvailability = async (
   id: string,
   availabilityStatus: 'available' | 'reserved' | 'unavailable'
 ): Promise<ICar> => {
-  if (!Types.ObjectId.isValid(id)) {
-    throw new ValidationError('Invalid car ID format');
-  }
+  // Find car first to ensure it exists and is not deleted
+  await findById(id);
 
   const car = await Car.findByIdAndUpdate(
     id,
@@ -352,9 +368,8 @@ export const associateWithPacks = async (
   carId: string,
   packIds: string[]
 ): Promise<ICar> => {
-  if (!Types.ObjectId.isValid(carId)) {
-    throw new ValidationError('Invalid car ID format');
-  }
+  // Find car first to ensure it exists and is not deleted
+  await findById(carId);
 
   // Validate all pack IDs
   const validPackIds = packIds.filter(id => Types.ObjectId.isValid(id));

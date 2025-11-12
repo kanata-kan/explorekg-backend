@@ -3,6 +3,7 @@ import { Activity, IActivity } from '../models/activity.model';
 import { NotFoundError, ValidationError } from '../utils/AppError';
 import { ENV } from '../config/env';
 import { Types } from 'mongoose';
+import { excludeDeleted, markAsDeleted, isDeleted } from '../utils/softDelete.util';
 
 /**
  * Activity Service Layer
@@ -104,12 +105,13 @@ export class ActivityService {
       query.$text = { $search: filters.q };
     }
 
-    // Execute query with pagination
+    // Execute query with pagination (exclude soft-deleted by default)
     const skip = (validPage - 1) * validLimit;
+    const finalQuery = excludeDeleted(query);
 
     const [items, total] = await Promise.all([
-      Activity.find(query).sort(sort).skip(skip).limit(validLimit).lean(),
-      Activity.countDocuments(query),
+      Activity.find(finalQuery).sort(sort).skip(skip).limit(validLimit).lean(),
+      Activity.countDocuments(finalQuery),
     ]);
 
     const pages = Math.ceil(total / validLimit);
@@ -130,22 +132,27 @@ export class ActivityService {
 
   /**
    * Find activity by ID or slug (from metadata.path)
+   * Excludes soft-deleted activities by default
    */
   static async findById(id: string): Promise<IActivity> {
     let activity: IActivity | null = null;
 
-    // Try to find by MongoDB ObjectId
+    // Try to find by MongoDB ObjectId (exclude soft-deleted)
     if (Types.ObjectId.isValid(id)) {
-      activity = await Activity.findById(id);
+      activity = await Activity.findOne(
+        excludeDeleted({ _id: id })
+      );
     }
 
     // If not found, try to find by slug (metadata.path)
     if (!activity) {
       const slug = id.startsWith('/activities/') ? id : `/activities/${id}`;
-      activity = await Activity.findOne({ 'metadata.path': slug });
+      activity = await Activity.findOne(
+        excludeDeleted({ 'metadata.path': slug })
+      );
     }
 
-    if (!activity) {
+    if (!activity || isDeleted(activity)) {
       throw new NotFoundError(`Activity not found with id: ${id}`);
     }
 
@@ -154,15 +161,17 @@ export class ActivityService {
 
   /**
    * Find all language versions of an activity by localeGroupId
-   * Returns all translations (EN, FR) for the same activity
+   * Returns all translations (EN, FR) for the same activity (excluding soft-deleted)
    */
   static async findByLocaleGroupId(
     localeGroupId: string
   ): Promise<IActivity[]> {
-    const activities = await Activity.find({
-      localeGroupId,
-      status: 'active',
-    }).sort({ locale: 1 }); // Sort by locale (en first, then fr)
+    const activities = await Activity.find(
+      excludeDeleted({
+        localeGroupId,
+        status: 'active',
+      })
+    ).sort({ locale: 1 }); // Sort by locale (en first, then fr)
 
     return activities;
   }
@@ -207,24 +216,34 @@ export class ActivityService {
   }
 
   /**
-   * Soft delete an activity (set status to inactive)
+   * Soft delete an activity (set deletedAt to current date)
    */
   static async remove(id: string): Promise<void> {
     const activity = await this.findById(id);
-    activity.status = 'inactive';
+    
+    // Check if already deleted
+    if (isDeleted(activity)) {
+      throw new ValidationError('Activity is already deleted');
+    }
+
+    // Mark as deleted
+    Object.assign(activity, markAsDeleted());
     await activity.save();
   }
 
   /**
-   * Get activity statistics
+   * Get activity statistics (excluding soft-deleted)
    */
   static async getStatistics() {
+    const softDeleteFilter = { deletedAt: { $exists: false } };
+    
     const [total, byStatus, byAvailability, pricing] = await Promise.all([
-      // Total count
-      Activity.countDocuments(),
+      // Total count (excluding soft-deleted)
+      Activity.countDocuments(softDeleteFilter),
 
-      // Count by status
+      // Count by status (excluding soft-deleted)
       Activity.aggregate([
+        { $match: softDeleteFilter },
         {
           $group: {
             _id: '$status',
@@ -233,8 +252,9 @@ export class ActivityService {
         },
       ]),
 
-      // Count by availability
+      // Count by availability (excluding soft-deleted)
       Activity.aggregate([
+        { $match: softDeleteFilter },
         {
           $group: {
             _id: '$availabilityStatus',
@@ -243,8 +263,9 @@ export class ActivityService {
         },
       ]),
 
-      // Price statistics
+      // Price statistics (excluding soft-deleted)
       Activity.aggregate([
+        { $match: softDeleteFilter },
         {
           $group: {
             _id: null,
@@ -328,25 +349,29 @@ export class ActivityService {
   }
 
   /**
-   * Find activity by slug
+   * Find activity by slug (excluding soft-deleted)
    */
   static async findBySlug(slug: string): Promise<IActivity | null> {
     const path = slug.startsWith('/activities/') ? slug : `/activities/${slug}`;
-    return await Activity.findOne({ 'metadata.path': path });
+    return await Activity.findOne(
+      excludeDeleted({ 'metadata.path': path })
+    );
   }
 
   /**
-   * Find activities by location
+   * Find activities by location (excluding soft-deleted)
    */
   static async findByLocation(location: string): Promise<IActivity[]> {
-    return await Activity.find({
-      location: { $regex: location, $options: 'i' },
-      status: 'active',
-    }).sort({ createdAt: -1 });
+    return await Activity.find(
+      excludeDeleted({
+        location: { $regex: location, $options: 'i' },
+        status: 'active',
+      })
+    ).sort({ createdAt: -1 });
   }
 
   /**
-   * Find free activities
+   * Find free activities (excluding soft-deleted)
    */
   static async findFreeActivities(locale?: 'en' | 'fr'): Promise<IActivity[]> {
     const query: any = {
@@ -359,7 +384,7 @@ export class ActivityService {
       query.locale = locale;
     }
 
-    return await Activity.find(query).sort({ createdAt: -1 });
+    return await Activity.find(excludeDeleted(query)).sort({ createdAt: -1 });
   }
 }
 

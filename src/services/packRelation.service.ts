@@ -4,6 +4,7 @@ import TravelPack from '../models/travelPack.model';
 import { Activity } from '../models/activity.model';
 import { Car } from '../models/car.model';
 import { NotFoundError, ValidationError } from '../utils/AppError';
+import { excludeDeleted } from '../utils/softDelete.util';
 // Pricing Service imports
 import { calculatePackRelationPrice, calculateDeposit } from './pricing.service';
 import { DepositPolicy } from '../policies';
@@ -116,11 +117,13 @@ export const getDetailedPack = async (
   travelPackLocaleGroupId: string,
   locale: 'en' | 'fr'
 ): Promise<DetailedPackResponse> => {
-  // 1. Fetch TravelPack with requested locale
-  const pack = await TravelPack.findOne({
-    localeGroupId: travelPackLocaleGroupId,
-    locale, // Filter by locale
-  }).lean();
+  // 1. Fetch TravelPack with requested locale (excluding soft-deleted)
+  const pack = await TravelPack.findOne(
+    excludeDeleted({
+      localeGroupId: travelPackLocaleGroupId,
+      locale, // Filter by locale
+    })
+  ).lean();
 
   if (!pack) {
     throw new NotFoundError(
@@ -164,10 +167,12 @@ export const getDetailedPack = async (
 
   let activities: any[] = [];
   if (activityLocaleGroupIds.length > 0) {
-    activities = await Activity.find({
-      localeGroupId: { $in: activityLocaleGroupIds },
-      locale,
-    })
+    activities = await Activity.find(
+      excludeDeleted({
+        localeGroupId: { $in: activityLocaleGroupIds },
+        locale,
+      })
+    )
       .select('-__v')
       .lean();
   }
@@ -177,10 +182,12 @@ export const getDetailedPack = async (
 
   let cars: any[] = [];
   if (carLocaleGroupIds.length > 0) {
-    cars = await Car.find({
-      localeGroupId: { $in: carLocaleGroupIds },
-      locale,
-    })
+    cars = await Car.find(
+      excludeDeleted({
+        localeGroupId: { $in: carLocaleGroupIds },
+        locale,
+      })
+    )
       .select('-__v')
       .lean();
   }
@@ -502,10 +509,12 @@ export const calculateCustomPrice = async (
   let detailedCar: DetailedCar | null = null;
 
   if (selectedCarId) {
-    const car = (await Car.findOne({
-      localeGroupId: selectedCarId,
-      locale,
-    }).lean()) as any;
+    const car = (await Car.findOne(
+      excludeDeleted({
+        localeGroupId: selectedCarId,
+        locale,
+      })
+    ).lean()) as any;
 
     const carRelation = relation.relations.cars.find(
       r => r.localeGroupId === selectedCarId
@@ -560,10 +569,12 @@ export const calculateCustomPrice = async (
 export const createPackRelation = async (
   data: Partial<IPackRelation>
 ): Promise<IPackRelation> => {
-  // Verify travel pack exists
-  const packExists = await TravelPack.findOne({
-    localeGroupId: data.travelPackLocaleGroupId,
-  });
+  // Verify travel pack exists (excluding soft-deleted)
+  const packExists = await TravelPack.findOne(
+    excludeDeleted({
+      localeGroupId: data.travelPackLocaleGroupId,
+    })
+  );
 
   if (!packExists) {
     throw new NotFoundError(
