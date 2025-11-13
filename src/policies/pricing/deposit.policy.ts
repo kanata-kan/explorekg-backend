@@ -1,5 +1,3 @@
-// src/policies/pricing/deposit.policy.ts
-
 /**
  * Deposit Policy
  * Manages deposit calculation rules
@@ -8,7 +6,7 @@ export class DepositPolicy {
   /**
    * Default deposit rate: 20% (0.2)
    */
-  private static readonly DEFAULT_DEPOSIT_RATE = 0.2;
+  static DEFAULT_DEPOSIT_RATE = 0.2;
 
   /**
    * Rule: Calculate deposit as percentage of total
@@ -20,12 +18,10 @@ export class DepositPolicy {
     if (total < 0) {
       throw new Error('Total cannot be negative');
     }
-
     const rate = depositRate ?? this.DEFAULT_DEPOSIT_RATE;
     if (rate < 0 || rate > 1) {
       throw new Error('Deposit rate must be between 0 and 1');
     }
-
     return total * rate;
   }
 
@@ -42,7 +38,6 @@ export class DepositPolicy {
         return rate;
       }
     }
-
     return this.DEFAULT_DEPOSIT_RATE;
   }
 
@@ -55,11 +50,9 @@ export class DepositPolicy {
     if (depositRate < 0) {
       throw new Error('Deposit rate cannot be negative');
     }
-
     if (depositRate > 1) {
       throw new Error('Deposit rate cannot exceed 100%');
     }
-
     return true;
   }
 }

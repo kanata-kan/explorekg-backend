@@ -1,6 +1,4 @@
-// src/policies/booking/payment.policy.ts
-import { BookingStatus, PaymentStatus, IBooking } from '../../models/booking.model';
-import { ValidationError } from '../../utils/AppError';
+import { BookingStatus, PaymentStatus } from '../../models/booking.model';
 
 /**
  * Payment Policy
@@ -12,11 +10,7 @@ export class PaymentPolicy {
    * @param booking - Booking instance or booking data
    * @returns true if booking can be paid, false otherwise
    */
-  static canPay(booking: IBooking | {
-    status: BookingStatus;
-    paymentStatus: PaymentStatus;
-    isExpired: () => boolean;
-  }): boolean {
+  static canPay(booking: any): boolean {
     // Cannot pay if already paid
     if (booking.paymentStatus === PaymentStatus.PAID) {
       return false;
@@ -28,7 +22,7 @@ export class PaymentPolicy {
     }
 
     // Cannot pay if expired
-    if (booking.isExpired()) {
+    if (booking.isExpired && booking.isExpired()) {
       return false;
     }
 
@@ -57,49 +51,32 @@ export class PaymentPolicy {
    * @returns true if payment can be refunded, false otherwise
    */
   static canRefund(paymentStatus: PaymentStatus): boolean {
-    // Can only refund if already paid
     return paymentStatus === PaymentStatus.PAID;
   }
 
   /**
-   * Rule: Get payment status after cancellation
-   * @param paymentStatus - Current payment status
-   * @returns PaymentStatus after cancellation (REFUNDED if paid, otherwise unchanged)
-   */
-  static getPaymentStatusAfterCancellation(
-    paymentStatus: PaymentStatus
-  ): PaymentStatus {
-    // If paid, mark for refund
-    if (paymentStatus === PaymentStatus.PAID) {
-      return PaymentStatus.REFUNDED;
-    }
-
-    // Otherwise, keep current status
-    return paymentStatus;
-  }
-
-  /**
-   * Rule: Validate if booking can be paid (throws error if not)
+   * Rule: Validate if booking can be paid (throws error if cannot)
    * @param booking - Booking instance or booking data
    * @throws ValidationError if booking cannot be paid
    */
-  static validateCanPay(booking: IBooking | {
-    status: BookingStatus;
-    paymentStatus: PaymentStatus;
-    isExpired: () => boolean;
-  }): void {
+  static validateCanPay(booking: any): void {
     if (!this.canPay(booking)) {
-      if (booking.paymentStatus === PaymentStatus.PAID) {
-        throw new ValidationError('Booking already paid');
-      }
-      if (booking.status === BookingStatus.CANCELLED) {
-        throw new ValidationError('Cannot pay for cancelled booking');
-      }
-      if (booking.isExpired()) {
-        throw new ValidationError('Cannot pay for expired booking');
-      }
-      throw new ValidationError('Booking cannot be paid');
+      throw new Error('Booking cannot be paid');
     }
+  }
+
+  /**
+   * Rule: Get payment status after cancellation
+   * @param currentPaymentStatus - Current payment status
+   * @returns Payment status after cancellation
+   */
+  static getPaymentStatusAfterCancellation(currentPaymentStatus: PaymentStatus): PaymentStatus {
+    // If already paid, keep as paid (refund handled separately)
+    if (currentPaymentStatus === PaymentStatus.PAID) {
+      return PaymentStatus.PAID;
+    }
+    // Otherwise, keep current status
+    return currentPaymentStatus;
   }
 }
 

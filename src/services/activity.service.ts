@@ -4,6 +4,7 @@ import { NotFoundError, ValidationError } from '../utils/AppError';
 import { ENV } from '../config/env';
 import { Types } from 'mongoose';
 import { excludeDeleted, markAsDeleted, isDeleted } from '../utils/softDelete.util';
+import { ActivityPolicy } from '../policies/activity/activity.policy';
 
 /**
  * Activity Service Layer
@@ -180,6 +181,14 @@ export class ActivityService {
    * Create a new activity
    */
   static async create(data: Partial<IActivity>): Promise<IActivity> {
+    // Validate using policy
+    ActivityPolicy.validateActivityData(data);
+    
+    // Check if can create
+    if (!ActivityPolicy.canCreateActivity(data)) {
+      throw new ValidationError('Cannot create activity: validation failed');
+    }
+
     try {
       const activity = new Activity(data);
       await activity.save();
@@ -201,6 +210,14 @@ export class ActivityService {
   ): Promise<IActivity> {
     const activity = await this.findById(id);
 
+    // Validate using policy
+    ActivityPolicy.validateActivityData(data);
+    
+    // Check if can update
+    if (!ActivityPolicy.canUpdateActivity(activity, data)) {
+      throw new ValidationError('Cannot update activity: validation failed or activity is deleted');
+    }
+
     // Update fields
     Object.assign(activity, data);
 
@@ -221,9 +238,9 @@ export class ActivityService {
   static async remove(id: string): Promise<void> {
     const activity = await this.findById(id);
     
-    // Check if already deleted
-    if (isDeleted(activity)) {
-      throw new ValidationError('Activity is already deleted');
+    // Check if can delete using policy
+    if (!ActivityPolicy.canDeleteActivity(activity)) {
+      throw new ValidationError('Cannot delete activity: already deleted or has active dependencies');
     }
 
     // Mark as deleted

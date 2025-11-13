@@ -4,6 +4,7 @@ import { Types } from 'mongoose';
 import { NotFoundError, ValidationError } from '../utils/AppError';
 import { ENV } from '../config/env';
 import { excludeDeleted, markAsDeleted, isDeleted } from '../utils/softDelete.util';
+import { CarPolicy } from '../policies/car/car.policy';
 
 type FindFilters = {
   locale?: string | null;
@@ -184,17 +185,12 @@ export const findByLocaleGroupId = async (
  * Create a new car
  */
 export const create = async (carData: Partial<ICar>): Promise<ICar> => {
-  // Validate required fields
-  if (!carData.name || !carData.description) {
-    throw new ValidationError('Name and description are required');
-  }
-
-  if (!carData.pricing || !carData.pricing.amount) {
-    throw new ValidationError('Pricing information is required');
-  }
-
-  if (!carData.locale) {
-    throw new ValidationError('Locale is required');
+  // Validate using policy
+  CarPolicy.validateCarData(carData);
+  
+  // Check if can create
+  if (!CarPolicy.canCreateCar(carData)) {
+    throw new ValidationError('Cannot create car: validation failed');
   }
 
   // Create new car document
@@ -219,6 +215,14 @@ export const update = async (
   // Find car first to ensure it exists and is not deleted
   const existingCar = await findById(id);
   
+  // Validate using policy
+  CarPolicy.validateCarData(updateData);
+  
+  // Check if can update
+  if (!CarPolicy.canUpdateCar(existingCar, updateData)) {
+    throw new ValidationError('Cannot update car: validation failed or car is deleted');
+  }
+  
   // Find and update car
   const car = await Car.findByIdAndUpdate(id, updateData, {
     new: true,
@@ -239,9 +243,9 @@ export const remove = async (id: string): Promise<void> => {
   // Find car first to check if it exists and is not already deleted
   const car = await findById(id);
   
-  // Check if already deleted
-  if (isDeleted(car)) {
-    throw new ValidationError('Car is already deleted');
+  // Check if can delete using policy
+  if (!CarPolicy.canDeleteCar(car)) {
+    throw new ValidationError('Cannot delete car: already deleted or has active dependencies');
   }
 
   // Mark as deleted

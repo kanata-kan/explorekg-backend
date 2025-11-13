@@ -1,5 +1,3 @@
-// src/policies/pricing/tax.policy.ts
-import { BookingItemType } from '../../models/booking.model';
 import { getTaxRate, DEFAULT_TAX_RATE } from '../../config/pricing.config';
 
 /**
@@ -11,7 +9,7 @@ export class TaxPolicy {
    * Default tax rate: 10% (0.1)
    * Can be overridden via environment variable TAX_RATE
    */
-  private static readonly DEFAULT_TAX_RATE_VALUE = DEFAULT_TAX_RATE;
+  static DEFAULT_TAX_RATE_VALUE = DEFAULT_TAX_RATE;
 
   /**
    * Rule: Calculate tax as percentage of subtotal
@@ -23,12 +21,10 @@ export class TaxPolicy {
     if (subtotal < 0) {
       throw new Error('Subtotal cannot be negative');
     }
-
     const rate = taxRate ?? this.DEFAULT_TAX_RATE_VALUE;
     if (rate < 0 || rate > 1) {
       throw new Error('Tax rate must be between 0 and 1');
     }
-
     return subtotal * rate;
   }
 
@@ -38,7 +34,7 @@ export class TaxPolicy {
    * @param itemType - Item type (optional)
    * @returns Tax rate as decimal (e.g., 0.1 for 10%)
    */
-  static getTaxRate(itemType?: BookingItemType): number {
+  static getTaxRate(itemType?: string): number {
     // Future: Could have different tax rates per item type
     // For now, all items use the same rate from configuration
     return getTaxRate();

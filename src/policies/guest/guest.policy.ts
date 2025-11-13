@@ -1,6 +1,3 @@
-// src/policies/guest/guest.policy.ts
-import { IGuest } from '../../models/guest.model';
-
 /**
  * Guest Policy
  * Contains business rules for guest operations
@@ -9,7 +6,7 @@ export class GuestPolicy {
   /**
    * Default expiration days: 30 days
    */
-  private static readonly DEFAULT_EXPIRATION_DAYS = 30;
+  static DEFAULT_EXPIRATION_DAYS = 30;
 
   /**
    * Rule: Check if guest can be created (email uniqueness check)
@@ -23,7 +20,6 @@ export class GuestPolicy {
     if (!emailRegex.test(email)) {
       throw new Error('Invalid email format');
     }
-
     return true;
   }
 
@@ -32,7 +28,7 @@ export class GuestPolicy {
    * @param guest - Guest object to check
    * @returns true if guest can be updated, false otherwise
    */
-  static canUpdateGuest(guest: IGuest): boolean {
+  static canUpdateGuest(guest: any): boolean {
     // Cannot update if linked to user
     if (guest.userId) {
       return false;
@@ -51,7 +47,7 @@ export class GuestPolicy {
    * @param guest - Guest object to check
    * @returns true if guest can be linked, false otherwise
    */
-  static canLinkToUser(guest: IGuest): boolean {
+  static canLinkToUser(guest: any): boolean {
     return guest.canBeLinkedToUser();
   }
 
@@ -75,7 +71,7 @@ export class GuestPolicy {
    * @param guest - Guest object to check
    * @returns true if guest session is valid, false otherwise
    */
-  static isGuestSessionValid(guest: IGuest): boolean {
+  static isGuestSessionValid(guest: any): boolean {
     return !guest.isExpired();
   }
 }

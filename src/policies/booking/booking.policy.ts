@@ -1,6 +1,3 @@
-// src/policies/booking/booking.policy.ts
-import { IGuest } from '../../models/guest.model';
-import { CreateBookingData } from '../../services/booking.service';
 import { BookingItemType } from '../../models/booking.model';
 
 /**
@@ -13,7 +10,7 @@ export class BookingPolicy {
    * @param guest - Guest object to check
    * @returns true if guest can create booking, false otherwise
    */
-  static canCreateBooking(guest: IGuest): boolean {
+  static canCreateBooking(guest: any): boolean {
     return !guest.isExpired();
   }
 
@@ -32,7 +29,7 @@ export class BookingPolicy {
    * @param data - Booking creation data
    * @returns true if data is valid, throws ValidationError otherwise
    */
-  static validateBookingData(data: CreateBookingData): boolean {
+  static validateBookingData(data: any): boolean {
     // Validate guestId is provided
     if (!data.guestId || data.guestId.trim() === '') {
       throw new Error('Guest ID is required');
@@ -58,8 +55,6 @@ export class BookingPolicy {
     // Validate quantity based on item type
     if (data.itemType === BookingItemType.CAR) {
       // Check if numberOfDays is provided and is less than 1
-      // When numberOfDays is 0 or negative, it should throw an error
-      // Note: We check !== undefined to handle 0 correctly (0 !== undefined is true)
       if (data.numberOfDays !== undefined && data.numberOfDays < 1) {
         throw new Error('Number of days must be at least 1');
       }
@@ -68,8 +63,6 @@ export class BookingPolicy {
       data.itemType === BookingItemType.TRAVEL_PACK
     ) {
       // Check if numberOfPersons is provided and is less than 1
-      // When numberOfPersons is 0 or negative, it should throw an error
-      // Note: We check !== undefined to handle 0 correctly (0 !== undefined is true)
       if (data.numberOfPersons !== undefined && data.numberOfPersons < 1) {
         throw new Error('Number of persons must be at least 1');
       }

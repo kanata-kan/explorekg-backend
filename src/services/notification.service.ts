@@ -1,33 +1,10 @@
-// src/services/notification.service.ts
-
-/**
- * Notification Service
- * 
- * Central service for sending notifications.
- * Coordinates between policies, channels, and templates.
- * 
- * Architecture:
- * - Receives events from services
- * - Applies business rules (Policy)
- * - Selects appropriate channels
- * - Sends notifications
- */
-
-import {
-  INotification,
-  NotificationEvent,
-  NotificationChannel,
-  ChannelResult,
-  IChannel,
-  NotificationPriority,
-} from '../types/notification.types';
 import { NotificationPolicy } from '../policies/notification.policy';
 import { EmailChannel } from '../channels/email.channel';
 import { logger } from '../utils/logger';
 
 /**
  * Notification Service
- * 
+ *
  * Central service for all notifications.
  * Handles routing, validation, and sending.
  */
@@ -36,15 +13,15 @@ export class NotificationService {
    * Registered channels
    * Channels are registered at startup and can be added dynamically
    */
-  private static channels: Map<NotificationChannel, IChannel> = new Map();
+  private static channels = new Map<string, any>();
 
   /**
    * Initialize notification service
    * Registers all available channels
-   * 
+   *
    * Should be called at application startup
    */
-  static initialize(): void {
+  static initialize() {
     // Register email channel
     const emailChannel = new EmailChannel();
     this.registerChannel(emailChannel);
@@ -59,15 +36,12 @@ export class NotificationService {
 
   /**
    * Register a notification channel
-   * 
+   *
    * @param channel - Channel to register
    */
-  static registerChannel(channel: IChannel): void {
+  static registerChannel(channel: any) {
     if (!channel.isEnabled()) {
-      logger.warn(
-        { channel: channel.name },
-        'Attempted to register disabled channel'
-      );
+      logger.warn({ channel: channel.name }, 'Attempted to register disabled channel');
       return;
     }
 
@@ -77,15 +51,15 @@ export class NotificationService {
 
   /**
    * Send notification from event
-   * 
+   *
    * This is the main entry point for services.
    * Services call this method with an event, and the service
    * handles the rest (policy, channel selection, sending).
-   * 
+   *
    * @param event - Notification event
    * @returns Promise resolving when all notifications are sent
    */
-  static async sendEvent(event: NotificationEvent): Promise<void> {
+  static async sendEvent(event: any): Promise<void> {
     try {
       // Process event through policy
       const notificationData = NotificationPolicy.processEvent(event);
@@ -99,12 +73,12 @@ export class NotificationService {
       }
 
       // Create notification object
-      const notification: INotification = {
+      const notification = {
         type: notificationData.type,
         recipient: notificationData.recipient,
         data: notificationData.data,
         channels: notificationData.channels,
-        priority: notificationData.priority as NotificationPriority,
+        priority: notificationData.priority,
         metadata: notificationData.metadata,
       };
 
@@ -125,15 +99,15 @@ export class NotificationService {
 
   /**
    * Send notification directly
-   * 
+   *
    * Use this when you have a fully formed notification object.
    * For most cases, use sendEvent() instead.
-   * 
+   *
    * @param notification - Notification to send
    * @returns Promise resolving when all channels have sent
    */
-  static async send(notification: INotification): Promise<void> {
-    const results: ChannelResult[] = [];
+  static async send(notification: any): Promise<void> {
+    const results: any[] = [];
 
     // Send through each specified channel
     for (const channelName of notification.channels) {
@@ -149,7 +123,6 @@ export class NotificationService {
           },
           'Failed to send notification to channel'
         );
-
         results.push({
           success: false,
           channel: channelName,
@@ -185,18 +158,14 @@ export class NotificationService {
 
   /**
    * Send notification to a specific channel
-   * 
+   *
    * @param notification - Notification to send
    * @param channelName - Channel to use
    * @returns Promise resolving to channel result
    */
-  static async sendToChannel(
-    notification: INotification,
-    channelName: NotificationChannel
-  ): Promise<ChannelResult> {
+  static async sendToChannel(notification: any, channelName: string): Promise<any> {
     // Get channel
     const channel = this.channels.get(channelName);
-
     if (!channel) {
       const error = `Channel ${channelName} is not registered`;
       logger.error({ channel: channelName }, error);
@@ -230,21 +199,21 @@ export class NotificationService {
   /**
    * Get all registered channels
    */
-  static getChannels(): NotificationChannel[] {
+  static getChannels(): string[] {
     return Array.from(this.channels.keys());
   }
 
   /**
    * Get channel by name
    */
-  static getChannel(channelName: NotificationChannel): IChannel | undefined {
+  static getChannel(channelName: string): any {
     return this.channels.get(channelName);
   }
 
   /**
    * Check if a channel is registered and enabled
    */
-  static isChannelAvailable(channelName: NotificationChannel): boolean {
+  static isChannelAvailable(channelName: string): boolean {
     const channel = this.channels.get(channelName);
     return channel !== undefined && channel.isEnabled();
   }

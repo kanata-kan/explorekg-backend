@@ -1,4 +1,3 @@
-// src/policies/index.ts
 /**
  * Business Policy Layer - Barrel Export
  * Central export point for all business policies
@@ -20,4 +19,7 @@ export * from './guest/guest.policy';
 
 // Catalog Policies
 export * from './catalog/availability.policy';
+export * from './activity/activity.policy';
+export * from './car/car.policy';
+export * from './travelPack/travelPack.policy';
 

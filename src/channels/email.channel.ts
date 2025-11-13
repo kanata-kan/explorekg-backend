@@ -1,49 +1,43 @@
-// src/channels/email.channel.ts
+import { BaseChannel } from './base.channel';
+import { NotificationType, NotificationChannel } from '../types/notification.types';
+import { logger } from '../utils/logger';
 
 /**
  * Email Channel
- * 
+ *
  * Implementation of email notifications.
  * Currently uses a simple console.log for demonstration.
  * Can be easily replaced with SendGrid, AWS SES, or any other email provider.
  */
 
-import { BaseChannel } from './base.channel';
-import {
-  INotification,
-  NotificationChannel,
-  NotificationType,
-  ChannelResult,
-} from '../types/notification.types';
-import { logger } from '../utils/logger';
-
 /**
  * Email Channel Implementation
- * 
+ *
  * Sends notifications via email.
- * 
+ *
  * Current implementation: Console logging (for development)
  * Future: Integrate with SendGrid, AWS SES, or similar service
  */
 export class EmailChannel extends BaseChannel {
-  readonly name = NotificationChannel.EMAIL;
+  name = NotificationChannel.EMAIL;
 
   /**
    * Get notification types supported by email channel
    */
-  getSupportedTypes(): NotificationType[] {
+  getSupportedTypes(): string[] {
     return [
       NotificationType.BOOKING_CONFIRMATION,
       NotificationType.PAYMENT_CONFIRMATION,
       NotificationType.BOOKING_CANCELLATION,
       NotificationType.BOOKING_EXPIRATION,
+      NotificationType.PACK_RELATION_CREATED,
     ];
   }
 
   /**
    * Validate recipient has email address
    */
-  protected validateRecipient(notification: INotification): boolean {
+  validateRecipient(notification: any): boolean {
     if (!notification.recipient.email) {
       logger.warn(
         { notification: notification.type },
@@ -67,11 +61,11 @@ export class EmailChannel extends BaseChannel {
 
   /**
    * Send notification via email
-   * 
+   *
    * Current implementation: Console logging
    * TODO: Replace with actual email service (SendGrid, AWS SES, etc.)
    */
-  async send(notification: INotification): Promise<ChannelResult> {
+  async send(notification: any): Promise<any> {
     try {
       // Validate before sending
       if (!this.validate(notification)) {
@@ -106,7 +100,6 @@ export class EmailChannel extends BaseChannel {
 
       // Generate message ID (in real implementation, this comes from email service)
       const messageId = `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
       return this.createSuccessResult(messageId);
     } catch (error: any) {
       logger.error(
@@ -117,7 +110,6 @@ export class EmailChannel extends BaseChannel {
         },
         'Email channel: Failed to send notification'
       );
-
       return this.createErrorResult(error.message || 'Unknown error');
     }
   }
@@ -125,14 +117,14 @@ export class EmailChannel extends BaseChannel {
   /**
    * Get email subject based on notification type
    */
-  private getEmailSubject(type: NotificationType): string {
+  getEmailSubject(type: NotificationType): string {
     const subjects: Record<NotificationType, string> = {
       [NotificationType.BOOKING_CONFIRMATION]: 'Booking Confirmation - ExploreKG',
       [NotificationType.PAYMENT_CONFIRMATION]: 'Payment Confirmation - ExploreKG',
       [NotificationType.BOOKING_CANCELLATION]: 'Booking Cancellation - ExploreKG',
       [NotificationType.BOOKING_EXPIRATION]: 'Booking Expired - ExploreKG',
+      [NotificationType.PACK_RELATION_CREATED]: 'Pack Relation Created - ExploreKG',
     };
-
     return subjects[type] || 'Notification from ExploreKG';
   }
 
@@ -140,7 +132,7 @@ export class EmailChannel extends BaseChannel {
    * Format email content
    * TODO: Replace with template rendering
    */
-  private formatEmailContent(notification: INotification): string {
+  formatEmailContent(notification: any): string {
     const { recipient, data } = notification;
     const recipientName = recipient.name || recipient.email || 'Guest';
 
@@ -205,6 +197,23 @@ Booking Number: ${data.bookingNumber || 'N/A'}
 Expiration Reason: Payment not received within 24 hours
 
 If you would like to make a new booking, please visit our website.
+
+Best regards,
+ExploreKG Team
+        `.trim();
+
+      case NotificationType.PACK_RELATION_CREATED:
+        return `
+Hello ${recipientName},
+
+A new pack relation has been created successfully.
+
+Travel Pack: ${data.travelPackLocaleGroupId || 'N/A'}
+Activities: ${data.activityCount || 0}
+Cars: ${data.carCount || 0}
+Created At: ${new Date().toLocaleDateString()}
+
+The pack is now available for booking.
 
 Best regards,
 ExploreKG Team

@@ -1,31 +1,28 @@
-// src/policies/notification.policy.ts
+import {
+  NotificationType,
+  NotificationChannel,
+  NotificationPriority,
+} from '../types/notification.types';
 
 /**
  * Notification Policy
- * 
+ *
  * Business rules for notifications:
  * - Determine if notification should be sent
  * - Determine which channels to use
  * - Apply business logic (e.g., don't send if user opted out)
  */
 
-import {
-  NotificationType,
-  NotificationChannel,
-  NotificationEvent,
-  NotificationPriority,
-} from '../types/notification.types';
-
 /**
  * Notification Policy
- * 
+ *
  * Centralizes all business rules related to notifications.
  * This ensures consistency and makes it easy to modify rules.
  */
 export class NotificationPolicy {
   /**
    * Determine if notification should be sent
-   * 
+   *
    * @param type - Notification type
    * @param context - Context data (e.g., booking, guest)
    * @returns true if notification should be sent
@@ -54,6 +51,10 @@ export class NotificationPolicy {
         // Only send if booking actually expired
         return !!context.booking && context.booking.status === 'expired';
 
+      case NotificationType.PACK_RELATION_CREATED:
+        // Always send pack relation creation notification
+        return !!context.packRelation;
+
       default:
         // Unknown type: don't send
         return false;
@@ -62,15 +63,12 @@ export class NotificationPolicy {
 
   /**
    * Determine which channels to use for a notification
-   * 
+   *
    * @param type - Notification type
    * @param context - Context data
    * @returns Array of channels to use
    */
-  static getChannels(
-    type: NotificationType,
-    context: any
-  ): NotificationChannel[] {
+  static getChannels(type: NotificationType, context: any): NotificationChannel[] {
     const channels: NotificationChannel[] = [];
 
     // Check if recipient has email (always try email if available)
@@ -98,7 +96,7 @@ export class NotificationPolicy {
 
   /**
    * Get notification priority
-   * 
+   *
    * @param type - Notification type
    * @returns Priority level
    */
@@ -114,6 +112,9 @@ export class NotificationPolicy {
       case NotificationType.BOOKING_EXPIRATION:
         return NotificationPriority.LOW; // Less urgent
 
+      case NotificationType.PACK_RELATION_CREATED:
+        return NotificationPriority.NORMAL; // Administrative notification
+
       default:
         return NotificationPriority.NORMAL;
     }
@@ -121,18 +122,11 @@ export class NotificationPolicy {
 
   /**
    * Process notification event and create notification object
-   * 
+   *
    * @param event - Notification event
    * @returns Notification object ready to send, or null if should not send
    */
-  static processEvent(event: NotificationEvent): {
-    type: NotificationType;
-    recipient: any;
-    data: any;
-    channels: NotificationChannel[];
-    priority: NotificationPriority;
-    metadata?: any;
-  } | null {
+  static processEvent(event: any): any | null {
     // Check if should send
     if (!this.shouldSend(event.type, event)) {
       return null;
@@ -159,3 +153,4 @@ export class NotificationPolicy {
     };
   }
 }
+

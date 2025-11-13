@@ -1,5 +1,3 @@
-// src/policies/pricing/discount.policy.ts
-
 /**
  * Discount Policy
  * Manages discount calculation rules
@@ -15,11 +13,9 @@ export class DiscountPolicy {
     if (price < 0) {
       throw new Error('Price cannot be negative');
     }
-
     if (discountPercent < 0 || discountPercent > 100) {
       throw new Error('Discount percentage must be between 0 and 100');
     }
-
     const discountMultiplier = 1 - discountPercent / 100;
     return price * discountMultiplier;
   }
@@ -30,18 +26,13 @@ export class DiscountPolicy {
    * @param discountPercent - Discount percentage (0-100)
    * @returns Discount amount
    */
-  static calculateDiscountAmount(
-    price: number,
-    discountPercent: number
-  ): number {
+  static calculateDiscountAmount(price: number, discountPercent: number): number {
     if (price < 0) {
       throw new Error('Price cannot be negative');
     }
-
     if (discountPercent < 0 || discountPercent > 100) {
       throw new Error('Discount percentage must be between 0 and 100');
     }
-
     return price * (discountPercent / 100);
   }
 
@@ -54,11 +45,9 @@ export class DiscountPolicy {
     if (discount < 0) {
       throw new Error('Discount cannot be negative');
     }
-
     if (discount > 100) {
       throw new Error('Discount cannot exceed 100%');
     }
-
     return true;
   }
 }

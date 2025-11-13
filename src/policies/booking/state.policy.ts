@@ -1,5 +1,4 @@
-// src/policies/booking/state.policy.ts
-import { BookingStatus, PaymentStatus } from '../../models/booking.model';
+import { BookingStatus } from '../../models/booking.model';
 import { StateTransitionError } from '../../utils/AppError';
 
 /**
@@ -8,18 +7,11 @@ import { StateTransitionError } from '../../utils/AppError';
  */
 export class BookingStatePolicy {
   /**
-   * Valid state transitions map
-   * Defines which status transitions are allowed
+   * Valid state transitions
+   * Maps from current status to array of valid next statuses
    */
-  private static readonly VALID_TRANSITIONS: Record<
-    BookingStatus,
-    BookingStatus[]
-  > = {
-    [BookingStatus.PENDING]: [
-      BookingStatus.CONFIRMED,
-      BookingStatus.CANCELLED,
-      BookingStatus.EXPIRED,
-    ],
+  private static readonly VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+    [BookingStatus.PENDING]: [BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.EXPIRED],
     [BookingStatus.CONFIRMED]: [BookingStatus.CANCELLED],
     [BookingStatus.CANCELLED]: [],
     [BookingStatus.EXPIRED]: [],
@@ -31,10 +23,7 @@ export class BookingStatePolicy {
    * @param to - Target booking status
    * @returns true if transition is valid, false otherwise
    */
-  static canTransition(
-    from: BookingStatus,
-    to: BookingStatus
-  ): boolean {
+  static canTransition(from: BookingStatus, to: BookingStatus): boolean {
     // Same status is always valid (no-op)
     if (from === to) {
       return true;
@@ -49,9 +38,7 @@ export class BookingStatePolicy {
    * @param currentStatus - Current booking status
    * @returns Array of valid next statuses
    */
-  static getValidNextStatuses(
-    currentStatus: BookingStatus
-  ): BookingStatus[] {
+  static getValidNextStatuses(currentStatus: BookingStatus): BookingStatus[] {
     return this.VALID_TRANSITIONS[currentStatus] ?? [];
   }
 
@@ -80,63 +67,18 @@ export class BookingStatePolicy {
   }
 
   /**
-   * Rule: Check if booking can be paid
-   * @param status - Current booking status
-   * @param paymentStatus - Current payment status
-   * @param isExpired - Whether booking is expired
-   * @returns true if booking can be paid, false otherwise
-   */
-  static canPay(
-    status: BookingStatus,
-    paymentStatus: PaymentStatus,
-    isExpired: boolean
-  ): boolean {
-    // Cannot pay if already paid
-    if (paymentStatus === PaymentStatus.PAID) {
-      return false;
-    }
-
-    // Cannot pay if cancelled
-    if (status === BookingStatus.CANCELLED) {
-      return false;
-    }
-
-    // Cannot pay if expired
-    if (isExpired) {
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Rule: Get valid transitions for a status (alias for getValidNextStatuses)
-   * @param status - Current booking status
-   * @returns Array of valid next statuses
-   */
-  static getValidTransitions(status: BookingStatus): BookingStatus[] {
-    return this.getValidNextStatuses(status);
-  }
-
-  /**
-   * Rule: Validate state transition with detailed error message
+   * Rule: Validate state transition and throw error if invalid
    * @param from - Current booking status
    * @param to - Target booking status
    * @throws StateTransitionError if transition is invalid
    */
-  static validateTransition(
-    from: BookingStatus,
-    to: BookingStatus
-  ): void {
+  static validateTransition(from: BookingStatus, to: BookingStatus): void {
     if (!this.canTransition(from, to)) {
-      const validTransitions = this.getValidNextStatuses(from);
-      const validTransitionsStrings = validTransitions.map((s) => s.toString());
       throw new StateTransitionError(
-        `Invalid state transition from "${from}" to "${to}". ` +
-          `Valid transitions from "${from}" are: ${validTransitionsStrings.join(', ')}`,
-        from.toString(),
-        to.toString(),
-        validTransitionsStrings
+        `Invalid state transition from ${from} to ${to}`,
+        from,
+        to,
+        this.getValidNextStatuses(from)
       );
     }
   }

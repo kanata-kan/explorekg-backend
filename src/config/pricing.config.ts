@@ -1,5 +1,3 @@
-// src/config/pricing.config.ts
-
 /**
  * Pricing Configuration
  * Centralized configuration for pricing rules

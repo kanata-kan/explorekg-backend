@@ -8,6 +8,9 @@ import { excludeDeleted } from '../utils/softDelete.util';
 // Pricing Service imports
 import { calculatePackRelationPrice, calculateDeposit } from './pricing.service';
 import { DepositPolicy } from '../policies';
+// Availability & Validation imports
+import { AvailabilityService } from './availability.service';
+import { BookingItemType } from '../models/booking.model';
 
 /**
  * PackRelation Service
@@ -364,7 +367,7 @@ export const calculateTotalPrice = (
     activitiesTotal,
     carsTotal,
     optionalActivitiesTotal,
-    pricingConfig.globalDiscount,
+    pricingConfig.globalDiscount ?? 0,
     {
       includeTax: false, // Pack relations don't include tax in finalTotal
       includeDeposit: true, // Include deposit calculation
@@ -582,6 +585,62 @@ export const createPackRelation = async (
     );
   }
 
+  // Check availability of all activities in the relation
+  if (data.relations?.activities && data.relations.activities.length > 0) {
+    for (const activityRelation of data.relations.activities) {
+      // Find activity by localeGroupId to get its _id
+      const activity = await Activity.findOne(
+        excludeDeleted({ localeGroupId: activityRelation.localeGroupId })
+      ).lean();
+
+      if (!activity) {
+        throw new NotFoundError(
+          `Activity with localeGroupId "${activityRelation.localeGroupId}" not found`
+        );
+      }
+
+      // Check if activity is available using AvailabilityService
+      const isAvailable = await AvailabilityService.checkItemAvailability(
+        BookingItemType.ACTIVITY,
+        activity._id.toString()
+      );
+
+      if (!isAvailable) {
+        throw new ValidationError(
+          `Activity "${activityRelation.localeGroupId}" is not available for booking`
+        );
+      }
+    }
+  }
+
+  // Check availability of all cars in the relation
+  if (data.relations?.cars && data.relations.cars.length > 0) {
+    for (const carRelation of data.relations.cars) {
+      // Find car by localeGroupId to get its _id
+      const car = await Car.findOne(
+        excludeDeleted({ localeGroupId: carRelation.localeGroupId })
+      ).lean();
+
+      if (!car) {
+        throw new NotFoundError(
+          `Car with localeGroupId "${carRelation.localeGroupId}" not found`
+        );
+      }
+
+      // Check if car is available using AvailabilityService
+      const isAvailable = await AvailabilityService.checkItemAvailability(
+        BookingItemType.CAR,
+        car._id.toString()
+      );
+
+      if (!isAvailable) {
+        throw new ValidationError(
+          `Car "${carRelation.localeGroupId}" is not available for booking`
+        );
+      }
+    }
+  }
+
   // Check if relation already exists
   const existingRelation = await PackRelation.findOne({
     travelPackLocaleGroupId: data.travelPackLocaleGroupId,
@@ -594,6 +653,31 @@ export const createPackRelation = async (
   }
 
   const relation = await PackRelation.create(data);
+  
+  // Send notification about pack relation creation (optional - for admin)
+  // Note: This requires admin email, which might not be available in the data
+  // For now, we'll skip the notification or add it when admin email is available
+  try {
+    // If admin email is available in metadata or context, send notification
+    // This is optional and can be added later when admin context is available
+    // await NotificationService.sendEvent({
+    //   type: NotificationType.PACK_RELATION_CREATED,
+    //   recipient: { email: adminEmail },
+    //   data: {
+    //     packRelationId: relation._id.toString(),
+    //     travelPackLocaleGroupId: data.travelPackLocaleGroupId,
+    //     activityCount: data.relations?.activities?.length || 0,
+    //     carCount: data.relations?.cars?.length || 0,
+    //   },
+    //   metadata: {
+    //     source: 'packRelation.service.createPackRelation',
+    //   },
+    // });
+  } catch (error) {
+    // Don't fail the creation if notification fails
+    // Log error silently
+  }
+  
   return relation.toObject();
 };
 

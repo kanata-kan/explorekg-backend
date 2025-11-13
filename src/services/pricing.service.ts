@@ -1,59 +1,10 @@
-// src/services/pricing.service.ts
-import { BookingItemType, BookingSnapshot } from '../models/booking.model';
+import { BookingSnapshot, BookingItemType } from '../models/booking.model';
 import { TaxPolicy, DiscountPolicy, DepositPolicy } from '../policies';
-import { CreateBookingData } from './booking.service';
-
-/**
- * Pricing Service
- * Unified pricing calculation service for all booking types
- */
-
-/**
- * Pricing calculation options
- */
-export interface PricingOptions {
-  taxRate?: number;
-  discountPercentage?: number;
-  depositRate?: number;
-  includeTax?: boolean;
-  includeDeposit?: boolean;
-}
-
-/**
- * Pricing breakdown result
- */
-export interface PricingBreakdown {
-  subtotal: number;
-  tax: number;
-  discount: number;
-  discountAmount: number;
-  total: number;
-  deposit?: number;
-}
-
-/**
- * Pack relation pricing breakdown result
- * Extended version for pack relations with activities and cars totals
- */
-export interface PackRelationPricingBreakdown {
-  activitiesTotal: number;
-  optionalActivitiesTotal: number;
-  carsTotal: number;
-  subtotal: number;
-  tax: number;
-  discount: number;
-  discountAmount: number;
-  total: number;
-  deposit?: number;
-}
 
 /**
  * Calculate subtotal based on item type and quantity
  */
-export const calculateSubtotal = (
-  snapshot: BookingSnapshot,
-  data: CreateBookingData
-): number => {
+export const calculateSubtotal = (snapshot: BookingSnapshot, data: any): number => {
   let subtotal = 0;
 
   switch (snapshot.itemType) {
@@ -85,14 +36,8 @@ export const applyTax = (subtotal: number, taxRate?: number): number => {
 /**
  * Apply discount to price
  */
-export const applyDiscount = (
-  price: number,
-  discountPercentage: number
-): { discountedPrice: number; discountAmount: number } => {
-  const discountAmount = DiscountPolicy.calculateDiscountAmount(
-    price,
-    discountPercentage
-  );
+export const applyDiscount = (price: number, discountPercentage: number) => {
+  const discountAmount = DiscountPolicy.calculateDiscountAmount(price, discountPercentage);
   const discountedPrice = DiscountPolicy.applyDiscount(price, discountPercentage);
   return {
     discountedPrice: Math.round(discountedPrice * 100) / 100,
@@ -103,10 +48,7 @@ export const applyDiscount = (
 /**
  * Calculate total price
  */
-export const calculateTotal = (
-  subtotal: number,
-  options: PricingOptions = {}
-): number => {
+export const calculateTotal = (subtotal: number, options: any = {}): number => {
   let total = subtotal;
 
   // Apply discount if provided
@@ -127,10 +69,7 @@ export const calculateTotal = (
 /**
  * Calculate deposit
  */
-export const calculateDeposit = (
-  total: number,
-  depositRate?: number
-): number => {
+export const calculateDeposit = (total: number, depositRate?: number): number => {
   return DepositPolicy.calculateDeposit(total, depositRate);
 };
 
@@ -140,9 +79,16 @@ export const calculateDeposit = (
  */
 export const calculatePrice = (
   snapshot: BookingSnapshot,
-  data: CreateBookingData,
-  options: PricingOptions = {}
-): PricingBreakdown => {
+  data: any,
+  options: any = {}
+): {
+  subtotal: number;
+  tax: number;
+  discount: number;
+  discountAmount: number;
+  total: number;
+  deposit?: number;
+} => {
   // Calculate subtotal
   const subtotal = calculateSubtotal(snapshot, data);
 
@@ -157,9 +103,10 @@ export const calculatePrice = (
 
   // Calculate tax (on discounted subtotal if discount applied)
   // For regular bookings, tax is included by default (unless explicitly set to false)
-  const tax = options.includeTax === false
-    ? 0
-    : applyTax(discountedSubtotal, options.taxRate);
+  const tax =
+    options.includeTax === false
+      ? 0
+      : applyTax(discountedSubtotal, options.taxRate);
 
   // Calculate total
   const total = discountedSubtotal + tax;
@@ -188,8 +135,8 @@ export const calculatePackRelationPrice = (
   activitiesTotal: number,
   carsTotal: number,
   optionalActivitiesTotal: number,
-  globalDiscountPercentage?: number,
-  options: PricingOptions = {}
+  globalDiscountPercentage: number,
+  options: any = {}
 ): {
   subtotal: number;
   tax: number;
@@ -212,9 +159,10 @@ export const calculatePackRelationPrice = (
 
   // Calculate tax (on discounted subtotal if discount applied)
   // For pack relations, tax is not included by default (unlike regular bookings)
-  const tax = options.includeTax === true
-    ? applyTax(discountedSubtotal, options.taxRate)
-    : 0;
+  const tax =
+    options.includeTax === true
+      ? applyTax(discountedSubtotal, options.taxRate)
+      : 0;
 
   // Calculate total
   const total = discountedSubtotal + tax;

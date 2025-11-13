@@ -1,4 +1,3 @@
-// src/policies/booking/snapshot.policy.ts
 import { BookingSnapshot, BookingItemType } from '../../models/booking.model';
 
 /**
@@ -57,17 +56,11 @@ export class BookingSnapshotPolicy {
   }
 
   /**
-   * Rule: Check if snapshot is complete
-   * @param snapshot - Snapshot to check
-   * @returns true if snapshot is complete, false otherwise
+   * Rule: Create snapshot timestamp
+   * @returns Current date/time
    */
-  static isSnapshotComplete(snapshot: BookingSnapshot): boolean {
-    try {
-      this.validateSnapshot(snapshot);
-      return true;
-    } catch {
-      return false;
-    }
+  static createSnapshotTimestamp(): Date {
+    return new Date();
   }
 }
 

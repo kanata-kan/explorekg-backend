@@ -4,6 +4,7 @@ import { Types } from 'mongoose';
 import { NotFoundError, ValidationError } from '../utils/AppError';
 import { ENV } from '../config/env';
 import { excludeDeleted, markAsDeleted, isDeleted } from '../utils/softDelete.util';
+import { TravelPackPolicy } from '../policies/travelPack/travelPack.policy';
 
 type FindFilters = {
   locale?: string | null;
@@ -161,11 +162,12 @@ export const createOne = async (
   payload: Partial<ITravelPack>,
   createdBy: string | null = null
 ) => {
-  // Validate required localized content
-  if (!payload.locales || (!payload.locales.en && !payload.locales.fr)) {
-    throw new ValidationError(
-      'At least one localized version (en or fr) is required'
-    );
+  // Validate using policy
+  TravelPackPolicy.validateTravelPackData(payload);
+  
+  // Check if can create
+  if (!TravelPackPolicy.canCreateTravelPack(payload)) {
+    throw new ValidationError('Cannot create travel pack: validation failed');
   }
 
   const doc = new TravelPack({
@@ -194,30 +196,57 @@ export const updateByIdOrSlug = async (
   // Remove fields that shouldn't be updated
   const { createdAt, updatedAt, ...updatePayload } = payload;
 
+  // Find existing pack first for policy validation
+  let existingPack: ITravelPack | null = null;
+  
   // Try by ObjectId first
   if (Types.ObjectId.isValid(idOrSlug)) {
-    const doc = await TravelPack.findOneAndUpdate(
-      excludeDeleted({ _id: idOrSlug }),
-      updatePayload,
-      {
-        new: true,
-        runValidators: true,
-      }
-    )
-      .select('-__v')
-      .lean();
-
-    if (doc) return doc;
+    existingPack = await TravelPack.findOne(
+      excludeDeleted({ _id: idOrSlug })
+    ).lean() as ITravelPack | null;
+  } else {
+    // Fallback to slug
+    existingPack = await TravelPack.findOne(
+      excludeDeleted({ slug: idOrSlug })
+    ).lean() as ITravelPack | null;
   }
 
-  // Fallback to slug
-  const doc = await TravelPack.findOneAndUpdate(
-    excludeDeleted({ slug: idOrSlug }),
-    updatePayload,
-    { new: true, runValidators: true }
-  )
-    .select('-__v')
-    .lean();
+  if (!existingPack) {
+    throw new NotFoundError(`Travel pack with id/slug "${idOrSlug}" not found`);
+  }
+
+  // Validate using policy
+  TravelPackPolicy.validateTravelPackData(updatePayload);
+  
+  // Check if can update
+  if (!TravelPackPolicy.canUpdateTravelPack(existingPack, updatePayload)) {
+    throw new ValidationError('Cannot update travel pack: validation failed or pack is deleted/archived');
+  }
+
+  // Update pack
+  let doc: ITravelPack | null = null;
+  
+  if (Types.ObjectId.isValid(idOrSlug)) {
+    doc = await TravelPack.findOneAndUpdate(
+      { _id: idOrSlug },
+      updatePayload,
+      { new: true, runValidators: true }
+    )
+      .select('-__v')
+      .lean() as ITravelPack | null;
+  } else {
+    doc = await TravelPack.findOneAndUpdate(
+      { slug: idOrSlug },
+      updatePayload,
+      { new: true, runValidators: true }
+    )
+      .select('-__v')
+      .lean() as ITravelPack | null;
+  }
+
+  if (!doc) {
+    throw new NotFoundError(`Travel pack with id/slug "${idOrSlug}" not found`);
+  }
 
   return doc;
 };
@@ -233,8 +262,15 @@ export const archiveByIdOrSlug = async (idOrSlug: string): Promise<boolean> => {
 
   // Find pack first to check if it exists and is not already deleted
   const pack = await findByIdOrSlug(idOrSlug);
-  if (!pack || isDeleted(pack as any)) {
-    throw new NotFoundError('Travel pack not found or already deleted');
+  if (!pack) {
+    throw new NotFoundError('Travel pack not found');
+  }
+
+  // Check if can delete using policy
+  // Convert lean document to ITravelPack for policy check
+  const packDoc = pack as unknown as ITravelPack;
+  if (!TravelPackPolicy.canDeleteTravelPack(packDoc)) {
+    throw new ValidationError('Cannot delete travel pack: already deleted or has active dependencies');
   }
 
   const updateResult = Types.ObjectId.isValid(idOrSlug)

@@ -259,6 +259,22 @@ export const createBooking = async (
       DateValidationService.validateFutureDate(startDate, true);
     }
 
+    // Create booking snapshot (before transaction)
+    const snapshot = await createBookingSnapshot(
+      data.itemType,
+      data.itemId,
+      data.locale || 'en'
+    );
+
+    // Validate snapshot using policy
+    BookingSnapshotPolicy.validateSnapshot(snapshot);
+
+    // Calculate pricing
+    const pricing = calculateBookingPrice(snapshot, data);
+
+    // Calculate expiration date using policy
+    const expiresAt = BookingPolicy.calculateExpirationDate();
+
     // Start MongoDB transaction for atomic booking creation
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -314,23 +330,7 @@ export const createBooking = async (
       }
 
       // Generate unique booking number (inside transaction)
-      const bookingNumber = await BookingCounter.getNextBookingNumber(undefined, session);
-
-      // Create snapshot of the booked item
-      const snapshot = await createBookingSnapshot(
-        data.itemType,
-        data.itemId,
-        data.locale || guest.locale || 'en'
-      );
-
-      // Validate snapshot using policy
-      BookingSnapshotPolicy.validateSnapshot(snapshot);
-
-      // Calculate pricing
-      const pricing = calculateBookingPrice(snapshot, data);
-
-      // Calculate expiration date using policy (24 hours from now)
-      const expiresAt = BookingPolicy.calculateExpirationDate();
+      const bookingNumber = await BookingCounter.getNextBookingNumber(new Date());
 
       // Create booking (inside transaction)
       const booking = new Booking({
