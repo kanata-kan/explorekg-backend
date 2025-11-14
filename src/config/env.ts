@@ -7,10 +7,15 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 // Utility function to validate required environment variables
-function required(key: string, fallback?: string): string {
+function required(key: string, fallback?: string, minLength?: number): string {
   const value = process.env[key] || fallback;
   if (!value) {
     console.error(`❌ Missing required environment variable: ${key}`);
+    console.error(`   Please check your .env file or environment configuration.`);
+    process.exit(1);
+  }
+  if (minLength && value.length < minLength) {
+    console.error(`❌ Environment variable ${key} is too short (minimum ${minLength} characters)`);
     process.exit(1);
   }
   return value;
@@ -59,7 +64,7 @@ export const ENV = {
   ENABLE_SECURITY_HEADERS: process.env.ENABLE_SECURITY_HEADERS !== 'false', // Default enabled
 
   // Application Configuration
-  CORS_ORIGIN: process.env.CORS_ORIGIN || '*',
+  CORS_ORIGIN: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? '' : '*'),
   CORS_WHITELIST: process.env.CORS_WHITELIST
     ? process.env.CORS_WHITELIST.split(',').map(origin => origin.trim())
     : [],

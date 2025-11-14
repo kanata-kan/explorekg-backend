@@ -1,5 +1,6 @@
 // src/controllers/activity.controller.ts
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { ValidatedRequest } from '../types/common';
 import { ActivityService } from '../services/activity.service';
 import { successResponse, errorResponse } from '../utils/responseHelpers';
 
@@ -13,13 +14,13 @@ import { successResponse, errorResponse } from '../utils/responseHelpers';
  * Get all activities with filtering and pagination
  */
 export const getActivities = async (
-  req: Request,
+  req: ValidatedRequest<any, any, Record<string, any>>,
   res: Response,
   next: NextFunction
 ) => {
   try {
     // Use validated query from middleware
-    const query = (req as any).validatedQuery || {};
+    const query = req.validatedQuery || {};
 
     const { page, limit, sort, ...filters } = query;
 
@@ -40,7 +41,7 @@ export const getActivities = async (
  * Get a single activity by ID or slug
  */
 export const getActivityById = async (
-  req: Request,
+  req: ValidatedRequest<any, { id: string }>,
   res: Response,
   next: NextFunction
 ) => {
@@ -60,13 +61,13 @@ export const getActivityById = async (
  * Create a new activity
  */
 export const createActivity = async (
-  req: Request,
+  req: ValidatedRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
     // Use validated body from middleware
-    const activityData = (req as any).validatedBody || req.body;
+    const activityData = req.validatedBody || req.body;
 
     const activity = await ActivityService.create(activityData);
 
@@ -81,14 +82,14 @@ export const createActivity = async (
  * Update an existing activity
  */
 export const updateActivity = async (
-  req: Request,
+  req: ValidatedRequest<any, { id: string }>,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { id } = req.params;
     // Use validated body from middleware
-    const updateData = (req as any).validatedBody || req.body;
+    const updateData = req.validatedBody || req.body;
 
     const activity = await ActivityService.update(id, updateData);
 
@@ -103,7 +104,7 @@ export const updateActivity = async (
  * Soft delete an activity (set deletedAt)
  */
 export const deleteActivity = async (
-  req: Request,
+  req: ValidatedRequest<any, { id: string }>,
   res: Response,
   next: NextFunction
 ) => {
@@ -127,7 +128,7 @@ export const deleteActivity = async (
  * Get activity statistics
  */
 export const getStatistics = async (
-  req: Request,
+  req: ValidatedRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -145,7 +146,7 @@ export const getStatistics = async (
  * Get all available activities
  */
 export const getAvailableActivities = async (
-  req: Request,
+  req: ValidatedRequest<any, any, { locale?: 'en' | 'fr' }>,
   res: Response,
   next: NextFunction
 ) => {
@@ -165,7 +166,7 @@ export const getAvailableActivities = async (
  * Update activity availability status
  */
 export const updateAvailability = async (
-  req: Request,
+  req: ValidatedRequest<{ availabilityStatus: string }, { id: string }>,
   res: Response,
   next: NextFunction
 ) => {
@@ -196,7 +197,7 @@ export const updateAvailability = async (
  * Associate activity with travel packs
  */
 export const associateWithPacks = async (
-  req: Request,
+  req: ValidatedRequest<{ packIds: string[] }, { id: string }>,
   res: Response,
   next: NextFunction
 ) => {

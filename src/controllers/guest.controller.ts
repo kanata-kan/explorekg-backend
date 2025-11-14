@@ -1,5 +1,6 @@
 // src/controllers/guest.controller.ts
 import { Request, Response, NextFunction } from 'express';
+import { ValidatedRequest } from '../types/common';
 import * as guestService from '../services/guest.service';
 import { dataAccessAuditor } from '../security';
 
@@ -13,21 +14,22 @@ import { dataAccessAuditor } from '../security';
  * Create a new guest
  */
 export const createGuest = async (
-  req: Request,
+  req: ValidatedRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const guestData = (req as any).validatedBody || req.body;
+    const guestData = req.validatedBody || req.body;
 
     const guest = await guestService.createGuest(guestData);
 
     // Security audit logging
-    dataAccessAuditor('CREATE', 'Guest', req, guest._id.toString());
+    dataAccessAuditor('CREATE', 'Guest', req as Request, guest._id.toString());
 
     res.status(201).json({
       success: true,
       data: {
+        _id: guest._id.toString(), // MongoDB ObjectId - required for booking creation
         sessionId: guest.sessionId,
         email: guest.email,
         fullName: guest.fullName,
@@ -35,6 +37,7 @@ export const createGuest = async (
         locale: guest.locale,
         expiresAt: guest.expiresAt,
         createdAt: guest.createdAt,
+        updatedAt: guest.updatedAt,
       },
       message: 'Guest created successfully',
       timestamp: new Date().toISOString(),
@@ -49,7 +52,7 @@ export const createGuest = async (
  * Get guest by sessionId
  */
 export const getGuest = async (
-  req: Request,
+  req: ValidatedRequest<any, { sessionId: string }>,
   res: Response,
   next: NextFunction
 ) => {
@@ -61,6 +64,7 @@ export const getGuest = async (
     res.status(200).json({
       success: true,
       data: {
+        _id: guest._id.toString(), // MongoDB ObjectId - required for booking creation
         sessionId: guest.sessionId,
         email: guest.email,
         fullName: guest.fullName,
@@ -86,7 +90,7 @@ export const getGuest = async (
  * Find guest by email
  */
 export const getGuestByEmail = async (
-  req: Request,
+  req: ValidatedRequest<any, { email: string }>,
   res: Response,
   next: NextFunction
 ) => {
@@ -107,12 +111,14 @@ export const getGuestByEmail = async (
     res.status(200).json({
       success: true,
       data: {
+        _id: guest._id.toString(), // MongoDB ObjectId - required for booking creation
         sessionId: guest.sessionId,
         email: guest.email,
         fullName: guest.fullName,
         locale: guest.locale,
         expiresAt: guest.expiresAt,
         createdAt: guest.createdAt,
+        updatedAt: guest.updatedAt,
       },
       timestamp: new Date().toISOString(),
     });
@@ -126,19 +132,20 @@ export const getGuestByEmail = async (
  * Update guest information
  */
 export const updateGuest = async (
-  req: Request,
+  req: ValidatedRequest<any, { sessionId: string }>,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { sessionId } = req.params;
-    const updateData = (req as any).validatedBody || req.body;
+    const updateData = req.validatedBody || req.body;
 
     const guest = await guestService.updateGuest(sessionId, updateData);
 
     res.status(200).json({
       success: true,
       data: {
+        _id: guest._id.toString(), // MongoDB ObjectId - required for booking creation
         sessionId: guest.sessionId,
         email: guest.email,
         fullName: guest.fullName,
@@ -160,13 +167,13 @@ export const updateGuest = async (
  * Extend guest expiration date
  */
 export const extendExpiration = async (
-  req: Request,
+  req: ValidatedRequest<{ daysToAdd?: number }, { sessionId: string }>,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { sessionId } = req.params;
-    const { daysToAdd } = (req as any).validatedBody || req.body;
+    const { daysToAdd } = req.validatedBody || req.body;
 
     const guest = await guestService.extendExpiration(
       sessionId,
@@ -193,13 +200,13 @@ export const extendExpiration = async (
  * Link guest to registered user (future feature)
  */
 export const linkToUser = async (
-  req: Request,
+  req: ValidatedRequest<{ userId: string }, { sessionId: string }>,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { sessionId } = req.params;
-    const { userId } = (req as any).validatedBody || req.body;
+    const { userId } = req.validatedBody || req.body;
 
     const guest = await guestService.linkToUser(sessionId, userId);
 

@@ -116,6 +116,10 @@ export const corsConfig = {
     'Authorization',
     'Accept-Language',
     'X-Session-ID',
+    'x-locale',
+    'x-session-id',
+    'session-id', // Frontend sends this header
+    'x-guest-session',
   ],
   optionsSuccessStatus: 200,
 };

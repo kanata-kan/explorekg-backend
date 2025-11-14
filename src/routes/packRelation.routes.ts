@@ -45,6 +45,18 @@ router.post(
 );
 
 /**
+ * @route   GET /api/v1/pack-relations/for-booking
+ * @desc    Get all detailed packs for booking selection
+ * @access  Public
+ * @query   locale - 'en' | 'fr' (default: 'en')
+ * @note    Must be before /:packId to avoid route collision
+ */
+router.get(
+  '/for-booking',
+  packRelationController.getAllDetailedPacksForBooking
+);
+
+/**
  * @route   GET /api/v1/pack-relations
  * @desc    Get all PackRelations
  * @access  Admin only

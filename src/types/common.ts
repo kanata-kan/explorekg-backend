@@ -1,4 +1,5 @@
 // Common types for the tourism booking system
+import { Request as ExpressRequest } from 'express';
 
 export interface PaginationQuery {
   page?: number;
@@ -32,11 +33,31 @@ export interface ApiResponse<T = any> {
 
 export interface ApiErrorResponse {
   success: false;
-  error: string;
-  message?: string;
-  statusCode: number;
+  error: {
+    message: string;
+    code?: string;
+    statusCode: number;
+    field?: string;
+    details?: any;
+  };
   timestamp: string;
   path?: string;
+}
+
+/**
+ * ValidatedRequest type for controllers
+ * Extends Express Request with validated body/params/query from Zod validation
+ */
+export interface ValidatedRequest<TBody = any, TParams = any, TQuery = any> extends ExpressRequest {
+  validatedBody?: TBody;
+  validatedParams?: TParams;
+  validatedQuery?: TQuery;
+  sanitizedQuery?: TQuery;
+  user?: {
+    _id: string;
+    email: string;
+    role: string;
+  };
 }
 
 // For use in Schema Models later

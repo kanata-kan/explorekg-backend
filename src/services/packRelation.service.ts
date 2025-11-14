@@ -78,6 +78,7 @@ export interface PricingBreakdown {
   discountAmount: number;
   finalTotal: number;
   deposit: number;
+  currency?: string;
 }
 
 /**
@@ -90,6 +91,11 @@ export interface DetailedPackResponse {
     cars: DetailedCar[];
   };
   pricing: PricingBreakdown;
+  pricingStrategy: {
+    strategy: 'sum' | 'custom';
+    customPrice?: number;
+    globalDiscount?: number;
+  };
   settings: {
     allowCustomization: boolean;
     minActivities?: number;
@@ -156,6 +162,11 @@ export const getDetailedPack = async (
         discountAmount: 0,
         finalTotal: 0,
         deposit: 0,
+        currency: pack.currency || 'USD',
+      },
+      pricingStrategy: {
+        strategy: 'sum',
+        globalDiscount: 0,
       },
       settings: {
         allowCustomization: false,
@@ -305,7 +316,11 @@ export const getDetailedPack = async (
       activities: detailedActivities,
       cars: detailedCars,
     },
-    pricing,
+    pricing: {
+      ...pricing,
+      currency: pack.currency || 'USD',
+    },
+    pricingStrategy: relation.pricing,
     settings: relation.settings,
   };
 };
@@ -719,4 +734,233 @@ export const deletePackRelation = async (
 export const getAllPackRelations = async (): Promise<IPackRelation[]> => {
   const relations = await PackRelation.find().lean();
   return relations as any;
+};
+
+/**
+ * Get all detailed packs for booking selection
+ * Returns all published travel packs with their relations, activities, cars, and pricing
+ * 
+ * @param locale - Requested locale ('en' | 'fr')
+ * @returns Array of detailed pack responses
+ */
+export const getAllDetailedPacksForBooking = async (
+  locale: 'en' | 'fr' = 'en'
+): Promise<DetailedPackResponse[]> => {
+  // 1. Get all published travel packs with requested locale
+  const packs = await TravelPack.find(
+    excludeDeleted({
+      status: 'published',
+      locale,
+      availability: true,
+    })
+  )
+    .sort({ createdAt: -1 })
+    .lean();
+
+  if (packs.length === 0) {
+    return [];
+  }
+
+  // 2. Get all pack relations for these packs
+  const localeGroupIds = packs.map(p => p.localeGroupId);
+  const relations = await PackRelation.find({
+    travelPackLocaleGroupId: { $in: localeGroupIds },
+  }).lean();
+
+  // 3. Get all unique activity and car localeGroupIds
+  const activityLocaleGroupIds = new Set<string>();
+  const carLocaleGroupIds = new Set<string>();
+
+  for (const relation of relations) {
+    relation.relations.activities?.forEach((a: any) => {
+      activityLocaleGroupIds.add(a.localeGroupId);
+    });
+    relation.relations.cars?.forEach((c: any) => {
+      carLocaleGroupIds.add(c.localeGroupId);
+    });
+  }
+
+  // 4. Fetch all activities and cars in batch
+  const [activities, cars] = await Promise.all([
+    activityLocaleGroupIds.size > 0
+      ? Activity.find(
+          excludeDeleted({
+            localeGroupId: { $in: Array.from(activityLocaleGroupIds) },
+            locale,
+            status: 'active',
+            availabilityStatus: 'available',
+          })
+        )
+          .select('-__v')
+          .lean()
+      : Promise.resolve([]),
+    carLocaleGroupIds.size > 0
+      ? Car.find(
+          excludeDeleted({
+            localeGroupId: { $in: Array.from(carLocaleGroupIds) },
+            locale,
+            status: 'active',
+            availabilityStatus: 'available',
+          })
+        )
+          .select('-__v')
+          .lean()
+      : Promise.resolve([]),
+  ]);
+
+  // 5. Build detailed pack responses
+  const detailedPacks: DetailedPackResponse[] = [];
+
+  for (const pack of packs) {
+    const relation = relations.find(
+      r => r.travelPackLocaleGroupId === pack.localeGroupId
+    );
+
+    if (!relation) {
+      // Pack without relations - return minimal response
+      detailedPacks.push({
+        pack,
+        relations: {
+          activities: [],
+          cars: [],
+        },
+        pricing: {
+          activitiesTotal: 0,
+          optionalActivitiesTotal: 0,
+          carsTotal: 0,
+          subtotal: pack.basePrice || 0,
+          globalDiscount: 0,
+          discountAmount: 0,
+          finalTotal: pack.basePrice || 0,
+          deposit: (pack.basePrice || 0) * 0.2,
+          currency: pack.currency || 'USD',
+        },
+        pricingStrategy: {
+          strategy: 'sum',
+          globalDiscount: 0,
+        },
+        settings: {
+          allowCustomization: false,
+        },
+      });
+      continue;
+    }
+
+    // Build detailed activities
+    const detailedActivities: DetailedActivity[] = relation.relations.activities.map(
+      (activityRelation: any) => {
+        const activity = activities.find(
+          a => a.localeGroupId === activityRelation.localeGroupId
+        );
+
+        if (!activity) {
+          return {
+            localeGroupId: activityRelation.localeGroupId,
+            locale,
+            slug: '',
+            name: 'Missing Activity',
+            price: 0,
+            duration: 0,
+            quantity: activityRelation.quantity,
+            optional: activityRelation.optional,
+            discount: activityRelation.discount,
+            finalPrice: 0,
+            missing: true,
+          };
+        }
+
+        const basePrice = activity.price || 0;
+        const discountMultiplier = 1 - activityRelation.discount / 100;
+        const finalPrice = basePrice * discountMultiplier * activityRelation.quantity;
+
+        return {
+          _id: activity._id ? String(activity._id) : '',
+          localeGroupId: activity.localeGroupId,
+          locale: activity.locale,
+          slug: (activity as any).slug || '',
+          name: activity.name,
+          description: activity.description || '',
+          category: (activity as any).tags?.[0] || (activity as any).category || '',
+          difficulty: activity.location || (activity as any).difficulty || '',
+          duration: typeof activity.duration === 'string' ? parseInt(activity.duration.replace(/[^\d]/g, ''), 10) || 0 : (activity.duration as number) || 0,
+          price: basePrice,
+          quantity: activityRelation.quantity,
+          optional: activityRelation.optional,
+          discount: activityRelation.discount,
+          finalPrice: Math.round(finalPrice * 100) / 100,
+          missing: false,
+        };
+      }
+    );
+
+    // Build detailed cars
+    const detailedCars: DetailedCar[] = relation.relations.cars.map(
+      (carRelation: any) => {
+        const car = cars.find(c => c.localeGroupId === carRelation.localeGroupId);
+
+        if (!car) {
+          return {
+            localeGroupId: carRelation.localeGroupId,
+            locale,
+            slug: '',
+            name: 'Missing Car',
+            pricePerDay: 0,
+            durationDays: carRelation.durationDays || 1,
+            optional: carRelation.optional,
+            discount: carRelation.discount,
+            totalPrice: 0,
+            missing: true,
+          };
+        }
+
+        const durationDays = carRelation.durationDays || 1;
+        const pricePerDay = car.pricing?.amount || 0;
+        const basePrice = pricePerDay * durationDays;
+        const discountMultiplier = 1 - carRelation.discount / 100;
+        const totalPrice = basePrice * discountMultiplier;
+
+        return {
+          _id: car._id ? String(car._id) : '',
+          localeGroupId: car.localeGroupId,
+          locale: car.locale,
+          slug: (car as any).slug || '',
+          name: car.name,
+          description: car.description || '',
+          carType: car.specs?.drive || '',
+          brand: car.tags?.[0] || '',
+          seats: parseInt(car.specs?.seats || '5'),
+          transmission: car.specs?.transmission || '',
+          pricePerDay,
+          durationDays,
+          optional: carRelation.optional,
+          discount: carRelation.discount,
+          totalPrice: Math.round(totalPrice * 100) / 100,
+          missing: false,
+        };
+      }
+    );
+
+    // Calculate pricing
+    const pricing = calculateTotalPrice(
+      detailedActivities,
+      detailedCars,
+      relation.pricing
+    );
+
+    detailedPacks.push({
+      pack,
+      relations: {
+        activities: detailedActivities,
+        cars: detailedCars,
+      },
+      pricing: {
+        ...pricing,
+        currency: pack.currency || 'USD',
+      },
+      pricingStrategy: relation.pricing,
+      settings: relation.settings,
+    });
+  }
+
+  return detailedPacks;
 };

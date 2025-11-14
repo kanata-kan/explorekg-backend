@@ -1,5 +1,6 @@
 // src/controllers/travelPack.controller.ts
 import { Request, Response, NextFunction } from 'express';
+import { ValidatedRequest } from '../types/common';
 import * as travelPackService from '../services/travelPack.service';
 import * as packRelationService from '../services/packRelation.service';
 import { Types } from 'mongoose';
@@ -24,7 +25,7 @@ import { asyncHandler } from '../middleware/asyncHandler';
  *  - page, limit
  */
 export const listTravelPacks = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: ValidatedRequest, res: Response) => {
     const {
       locale,
       status,
@@ -75,7 +76,7 @@ export const listTravelPacks = asyncHandler(
  * - id may be ObjectId or slug
  */
 export const getTravelPack = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: ValidatedRequest<any, { id: string }>, res: Response) => {
     const { id } = req.params;
     const doc = await travelPackService.findByIdOrSlug(id);
     if (!doc) {
@@ -98,7 +99,7 @@ export const getTravelPack = asyncHandler(
  * - Calls packRelationService.getDetailedPack() and formats response based on step
  */
 export const getDetailedTravelPack = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: ValidatedRequest<any, { id: string }, { step?: string; locale?: 'en' | 'fr' }>, res: Response) => {
     const { id } = req.params;
     const { step = 'full', locale = 'en' } = req.query as {
       step?: string;
@@ -182,11 +183,11 @@ export const getDetailedTravelPack = asyncHandler(
  * - Enhanced with better user handling and validation
  */
 export const createTravelPack = asyncHandler(
-  async (req: Request, res: Response) => {
-    const payload = req.body;
+  async (req: ValidatedRequest, res: Response) => {
+    const payload = req.validatedBody || req.body;
 
     // Extract user ID from request (if authentication middleware is used)
-    const userId = (req as any).user?._id || null;
+    const userId = req.user?._id || null;
 
     const created = await travelPackService.createOne(payload, userId);
 
@@ -204,7 +205,7 @@ export const createTravelPack = asyncHandler(
  * - partial update, validated by Zod partial schema
  */
 export const updateTravelPack = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: ValidatedRequest<any, { id: string }>, res: Response) => {
     const { id } = req.params;
     const payload = req.body;
     const updated = await travelPackService.updateByIdOrSlug(id, payload);
@@ -226,7 +227,7 @@ export const updateTravelPack = asyncHandler(
  * - Soft-delete: set status = archived (recommended)
  */
 export const deleteTravelPack = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: ValidatedRequest<any, { id: string }>, res: Response) => {
     const { id } = req.params;
     const result = await travelPackService.archiveByIdOrSlug(id);
     if (!result) {

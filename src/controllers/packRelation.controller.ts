@@ -54,6 +54,37 @@ export const getAllPackRelations = async (
 };
 
 /**
+ * Get all detailed packs for booking selection
+ * GET /api/v1/pack-relations/for-booking
+ * @query locale - 'en' | 'fr' (default: 'en')
+ */
+export const getAllDetailedPacksForBooking = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { locale = 'en' } = req.query as { locale?: 'en' | 'fr' };
+    const validLocale: 'en' | 'fr' = locale === 'fr' ? 'fr' : 'en';
+
+    const detailedPacks = await packRelationService.getAllDetailedPacksForBooking(
+      validLocale
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        items: detailedPacks,
+        count: detailedPacks.length,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get PackRelation by travelPackLocaleGroupId
  * GET /api/v1/pack-relations/:packId
  */

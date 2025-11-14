@@ -100,7 +100,9 @@ export const corsConfig = {
     const allowedOrigins =
       ENV.CORS_WHITELIST.length > 0
         ? ENV.CORS_WHITELIST
-        : ENV.CORS_ORIGIN.split(',').map(o => o.trim());
+        : ENV.CORS_ORIGIN && ENV.CORS_ORIGIN !== '*' 
+          ? ENV.CORS_ORIGIN.split(',').map(o => o.trim())
+          : [];
 
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -116,6 +118,10 @@ export const corsConfig = {
     'Authorization',
     'Accept-Language',
     'X-Session-ID',
+    'x-locale',
+    'x-session-id',
+    'session-id', // Frontend sends this header
+    'x-guest-session',
   ],
   optionsSuccessStatus: 200,
 };

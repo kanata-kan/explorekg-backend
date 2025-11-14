@@ -58,7 +58,7 @@ export const bookingCreateSchema = z
         message: 'Guest ID is required',
       })
       .regex(/^[0-9a-fA-F]{24}$/, {
-        message: 'Invalid Guest ID format (must be MongoDB ObjectId)',
+        message: 'Invalid Guest ID format. Must be MongoDB ObjectId (24 hex).',
       }),
 
     itemType: bookingItemTypeSchema,
@@ -185,26 +185,16 @@ export const bookingNumberParamSchema = z.object({
 /**
  * Guest ID Parameter Schema
  * GET /api/v1/bookings/guest/:guestId
- * Supports both UUID (sessionId) and MongoDB ObjectId
+ * Requires MongoDB ObjectId format
  */
 export const guestIdParamSchema = z.object({
   guestId: z
     .string({
       message: 'Guest ID is required',
     })
-    .refine(
-      val => {
-        // Check if UUID v4 format
-        const uuidRegex =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-        // Check if MongoDB ObjectId format
-        const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-        return uuidRegex.test(val) || objectIdRegex.test(val);
-      },
-      {
-        message: 'Invalid Guest ID format (must be UUID or MongoDB ObjectId)',
-      }
-    ),
+    .regex(/^[0-9a-fA-F]{24}$/, {
+      message: 'Invalid Guest ID format. Must be MongoDB ObjectId (24 hex).',
+    }),
 });
 
 /**
@@ -268,11 +258,14 @@ export const cancelBookingSchema = z.object({
 export const validateBody = (schema: z.ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
+      console.log('[Booking Validator] Validating request body:', JSON.stringify(req.body, null, 2));
       const validated = await schema.parseAsync(req.body);
+      console.log('[Booking Validator] Validation passed');
       (req as any).validatedBody = validated;
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('[Booking Validator] Validation failed:', error.issues);
         return res.status(400).json({
           success: false,
           error: 'Validation failed',
@@ -284,6 +277,7 @@ export const validateBody = (schema: z.ZodSchema) => {
           timestamp: new Date().toISOString(),
         });
       }
+      console.error('[Booking Validator] Unexpected error:', error);
       next(error);
     }
   };

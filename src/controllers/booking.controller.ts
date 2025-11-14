@@ -1,6 +1,9 @@
 // src/controllers/booking.controller.ts
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { ValidatedRequest } from '../types/common';
 import * as bookingService from '../services/booking.service';
+import type { CreateBookingData } from '../services/booking.service';
+import { z } from 'zod';
 
 /**
  * Booking Controllers
@@ -12,12 +15,16 @@ import * as bookingService from '../services/booking.service';
  * Create a new booking
  */
 export const createBooking = async (
-  req: Request,
+  req: ValidatedRequest<CreateBookingData>,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const bookingData = (req as any).validatedBody || req.body;
+    console.log('[Booking Controller] POST /api/v1/bookings - Request received');
+    console.log('[Booking Controller] Request body:', JSON.stringify(req.body, null, 2));
+    console.log('[Booking Controller] Validated body:', JSON.stringify(req.validatedBody, null, 2));
+    
+    const bookingData = req.validatedBody || req.body;
 
     const booking = await bookingService.createBooking(bookingData);
 
@@ -44,6 +51,7 @@ export const createBooking = async (
         status: booking.status,
         paymentStatus: booking.paymentStatus,
         expiresAt: booking.expiresAt,
+        metadata: booking.metadata,
         createdAt: booking.createdAt,
       },
       message: 'Booking created successfully',
@@ -59,7 +67,7 @@ export const createBooking = async (
  * Get booking by booking number
  */
 export const getBooking = async (
-  req: Request,
+  req: ValidatedRequest<any, { bookingNumber: string }>,
   res: Response,
   next: NextFunction
 ) => {
@@ -110,7 +118,7 @@ export const getBooking = async (
  * Get all bookings for a guest
  */
 export const getGuestBookings = async (
-  req: Request,
+  req: ValidatedRequest<any, { guestId: string }>,
   res: Response,
   next: NextFunction
 ) => {
@@ -149,13 +157,13 @@ export const getGuestBookings = async (
  * Update booking status
  */
 export const updateBookingStatus = async (
-  req: Request,
+  req: ValidatedRequest<{ status: string }, { bookingNumber: string }>,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { bookingNumber } = req.params;
-    const { status } = (req as any).validatedBody || req.body;
+    const { status } = req.validatedBody || req.body;
 
     const booking = await bookingService.updateBookingStatus(
       bookingNumber,
@@ -182,13 +190,13 @@ export const updateBookingStatus = async (
  * Mark booking as paid
  */
 export const markBookingAsPaid = async (
-  req: Request,
+  req: ValidatedRequest<{ paymentMethod: string; transactionId?: string; notes?: string }, { bookingNumber: string }>,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { bookingNumber } = req.params;
-    const paymentData = (req as any).validatedBody || req.body;
+    const paymentData = req.validatedBody || req.body;
 
     const booking = await bookingService.markAsPaid(bookingNumber, paymentData);
 
@@ -217,13 +225,13 @@ export const markBookingAsPaid = async (
  * Cancel booking
  */
 export const cancelBooking = async (
-  req: Request,
+  req: ValidatedRequest<{ reason?: string }, { bookingNumber: string }>,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { bookingNumber } = req.params;
-    const { reason } = (req as any).validatedBody || req.body;
+    const { reason } = req.validatedBody || req.body;
 
     const booking = await bookingService.cancelBooking(bookingNumber, reason);
 
@@ -249,7 +257,7 @@ export const cancelBooking = async (
  * Get all active bookings (admin only)
  */
 export const getAllActiveBookings = async (
-  req: Request,
+  req: ValidatedRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -287,7 +295,7 @@ export const getAllActiveBookings = async (
  * Get booking statistics (admin only)
  */
 export const getStatistics = async (
-  req: Request,
+  req: ValidatedRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -309,7 +317,7 @@ export const getStatistics = async (
  * Clean expired bookings (admin only)
  */
 export const cleanupExpired = async (
-  req: Request,
+  req: ValidatedRequest,
   res: Response,
   next: NextFunction
 ) => {

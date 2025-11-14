@@ -64,15 +64,28 @@ export interface GuestStatistics {
  */
 export const createGuest = async (data: CreateGuestData): Promise<IGuest> => {
   try {
+    console.log('[Guest Service] createGuest called with:', {
+      email: data.email,
+      fullName: data.fullName,
+      phone: data.phone,
+      locale: data.locale,
+    });
+
     // Validate email using policy
     GuestPolicy.canCreateGuest(data.email);
 
     // Generate unique UUID v4 for sessionId
     const sessionId = uuidv4();
+    console.log('[Guest Service] Generated sessionId:', sessionId);
 
     // Check if email already exists (optional: allow duplicate emails for guests)
     const existingGuest = await Guest.findByEmail(data.email);
     if (existingGuest && !existingGuest.isExpired()) {
+      console.log('[Guest Service] Existing guest found:', {
+        sessionId: existingGuest.sessionId,
+        email: existingGuest.email,
+        isExpired: existingGuest.isExpired(),
+      });
       throw new ValidationError(
         `Guest with email ${data.email} already exists and is active`
       );
@@ -98,7 +111,17 @@ export const createGuest = async (data: CreateGuestData): Promise<IGuest> => {
       expiresAt,
     });
 
+    console.log('[Guest Service] Saving guest to database...');
     await guest.save();
+    console.log('[Guest Service] Guest saved successfully:', {
+      _id: guest._id,
+      sessionId: guest.sessionId,
+      email: guest.email,
+    });
+
+    // Verify guest was saved by querying it back
+    const verifyGuest = await Guest.findBySessionId(sessionId);
+    console.log('[Guest Service] Verification query result:', verifyGuest ? 'FOUND' : 'NOT FOUND');
 
     return guest;
   } catch (error: any) {

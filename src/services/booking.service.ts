@@ -220,9 +220,23 @@ export const createBooking = async (
     BookingPolicy.validateBookingData(data);
 
     // Validate guest exists and is not expired
+    // Validate guestId is ObjectId format
+    if (!/^[0-9a-fA-F]{24}$/.test(data.guestId)) {
+      throw new ValidationError('Invalid Guest ID format. Must be MongoDB ObjectId (24 hex characters).');
+    }
+
+    // Find guest by ObjectId only
     const guest = await Guest.findById(data.guestId);
 
     if (!guest) {
+      // Try to find all guests with similar sessionId for debugging
+      const allGuests = await Guest.find({}).limit(5).exec();
+      console.log('[Booking Service] Sample guests in DB:', allGuests.map(g => ({
+        _id: g._id,
+        sessionId: g.sessionId,
+        email: g.email,
+      })));
+      
       throw new NotFoundError(`Guest with id "${data.guestId}" not found`);
     }
 
@@ -333,9 +347,10 @@ export const createBooking = async (
       const bookingNumber = await BookingCounter.getNextBookingNumber(new Date());
 
       // Create booking (inside transaction)
+      // Use the actual MongoDB _id from guest (not the UUID sessionId)
       const booking = new Booking({
       bookingNumber,
-      guestId: data.guestId,
+      guestId: guest._id, // Use ObjectId from guest, not the UUID sessionId
       snapshot,
       numberOfPersons: data.numberOfPersons,
       numberOfUnits: data.numberOfUnits,
@@ -419,23 +434,16 @@ export const findByBookingNumber = async (
 
 /**
  * Find all bookings for a guest
- * Supports both UUID (sessionId) and MongoDB ObjectId
+ * Requires MongoDB ObjectId format
  */
 export const findByGuestId = async (guestId: string): Promise<IBooking[]> => {
-  // Check if guestId is UUID (sessionId) or ObjectId
-  const isUUID =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      guestId
-    );
-
-  let guest;
-  if (isUUID) {
-    // Find by sessionId (UUID)
-    guest = await Guest.findBySessionId(guestId);
-  } else {
-    // Find by ObjectId
-    guest = await Guest.findById(guestId);
+  // Validate guestId is ObjectId format
+  if (!/^[0-9a-fA-F]{24}$/.test(guestId)) {
+    throw new ValidationError('Invalid Guest ID format. Must be MongoDB ObjectId (24 hex characters).');
   }
+
+  // Find guest by ObjectId only
+  const guest = await Guest.findById(guestId);
 
   if (!guest) {
     throw new NotFoundError(`Guest with id "${guestId}" not found`);

@@ -10,9 +10,13 @@
 /**
  * Filter condition to exclude soft-deleted items
  * Items with `deletedAt` field are considered deleted
+ * Handles both cases: field doesn't exist OR field is null
  */
 export const SOFT_DELETE_FILTER = {
-  deletedAt: { $exists: false },
+  $or: [
+    { deletedAt: { $exists: false } },
+    { deletedAt: null }
+  ]
 };
 
 /**

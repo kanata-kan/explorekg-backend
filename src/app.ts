@@ -120,13 +120,27 @@ export const createApp = () => {
   app.use('/api/v1/admin', strictRateLimit, adminRouter);
 
   // Payment endpoints get the strictest rate limiting
-  app.use('/api/v1/bookings/:id/payment', paymentRateLimit);
+  // Note: This is handled by the booking router, so this line may be redundant
+  // app.use('/api/v1/bookings/:id/payment', paymentRateLimit);
 
   // Setup honeypot endpoints for attack detection
   honeypotEndpoints(app);
 
   // 404 handler for favicon
   app.get('/favicon.ico', (req, res) => res.status(204));
+
+  // 404 handler for unmatched routes (must be before error handler)
+  app.use((req, res, next) => {
+    console.log(`[App] 404 - Route not found: ${req.method} ${req.originalUrl}`);
+    console.log(`[App] Available routes: POST /api/v1/bookings, GET /api/v1/bookings/:bookingNumber, etc.`);
+    res.status(404).json({
+      success: false,
+      error: 'Not Found',
+      message: `Route ${req.method} ${req.originalUrl} not found`,
+      statusCode: 404,
+      timestamp: new Date().toISOString(),
+    });
+  });
 
   // Global error handler (must be last)
   app.use(errorHandler);

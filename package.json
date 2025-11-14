@@ -15,7 +15,8 @@
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\"",
     "type-check": "tsc --noEmit",
-    "seed": "tsx scripts/seedContent.ts"
+    "seed": "tsx scripts/seedContent.ts",
+    "seed:booking": "tsx scripts/seedRealBookingData.ts"
   },
   "keywords": [],
   "author": "",

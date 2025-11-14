@@ -441,10 +441,20 @@ export const validateGuestBookingsOwnership = (
         return;
       }
 
-      // التحقق من Guest ownership
-      const providedGuestId = extractGuestSessionId(req);
+      // Validate guestId param is ObjectId format
+      if (!/^[0-9a-fA-F]{24}$/.test(guestId)) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid Guest ID format. Must be MongoDB ObjectId.',
+          code: 'INVALID_GUEST_ID_FORMAT',
+        });
+        return;
+      }
 
-      if (!providedGuestId) {
+      // التحقق من Guest ownership
+      const providedSessionId = extractGuestSessionId(req);
+
+      if (!providedSessionId) {
         logger.warn(
           {
             guestId,
@@ -462,12 +472,33 @@ export const validateGuestBookingsOwnership = (
         return;
       }
 
-      // التحقق من الملكية
-      if (guestId !== providedGuestId) {
+      // Find guest by sessionId to get their ObjectId
+      const guest = await Guest.findOne({ sessionId: providedSessionId });
+
+      if (!guest) {
+        logger.warn(
+          {
+            providedSessionId,
+            ip: req.ip,
+          },
+          'Guest session not found'
+        );
+
+        res.status(401).json({
+          success: false,
+          error: 'Invalid guest session',
+          code: 'INVALID_SESSION',
+        });
+        return;
+      }
+
+      // التحقق من الملكية - compare ObjectIds
+      if (guest._id.toString() !== guestId) {
         logger.warn(
           {
             requestedGuestId: guestId,
-            providedGuestId,
+            actualGuestId: guest._id.toString(),
+            providedSessionId,
             ip: req.ip,
           },
           'Attempted unauthorized guest bookings access'

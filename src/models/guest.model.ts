@@ -218,7 +218,14 @@ GuestSchema.methods.canBeLinkedToUser = function (): boolean {
 GuestSchema.statics.findBySessionId = async function (
   sessionId: string
 ): Promise<IGuest | null> {
-  return this.findOne({ sessionId }).exec();
+  console.log('[Guest Model] findBySessionId called with:', sessionId);
+  const guest = await this.findOne({ sessionId }).exec();
+  console.log('[Guest Model] findBySessionId result:', guest ? {
+    _id: guest._id,
+    sessionId: guest.sessionId,
+    email: guest.email,
+  } : 'NOT FOUND');
+  return guest;
 };
 
 /**

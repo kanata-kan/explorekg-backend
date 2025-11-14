@@ -30,6 +30,11 @@ const router = Router();
  */
 router.post(
   '/',
+  (req, res, next) => {
+    console.log('[Booking Routes] POST /api/v1/bookings - Route matched');
+    console.log('[Booking Routes] Request body:', JSON.stringify(req.body, null, 2));
+    next();
+  },
   bookingValidator.validateBody(bookingValidator.bookingCreateSchema),
   bookingController.createBooking
 );
