@@ -169,6 +169,20 @@ export const calculatePriceSchema = z.object({
     .nullable()
     .optional(),
   locale: z.enum(['en', 'fr']).default('en'),
+  numberOfPersons: z
+    .number({
+      message: 'Number of persons must be a number',
+    })
+    .int({
+      message: 'Number of persons must be an integer',
+    })
+    .min(1, {
+      message: 'Number of persons must be at least 1',
+    })
+    .max(50, {
+      message: 'Number of persons cannot exceed 50',
+    })
+    .default(1),
 });
 
 /**

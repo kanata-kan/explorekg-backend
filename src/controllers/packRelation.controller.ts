@@ -190,6 +190,7 @@ export const calculatePrice = async (
       selectedCar,
       carDurationDays,
       locale,
+      numberOfPersons,
     } = req.body;
 
     const result = await packRelationService.calculateCustomPrice(
@@ -197,7 +198,8 @@ export const calculatePrice = async (
       selectedActivities || [],
       selectedCar || null,
       carDurationDays || null,
-      locale
+      locale,
+      numberOfPersons ?? 1
     );
 
     res.status(200).json({

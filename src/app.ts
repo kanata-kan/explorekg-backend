@@ -50,6 +50,7 @@ import guestRouter from './routes/guest.routes';
 import bookingRouter from './routes/booking.routes';
 import securityRouter from './routes/security.routes';
 import adminRouter from './routes/admin.routes';
+import validationRouter from './validation/routes/validation.routes';
 
 export const createApp = () => {
   const app = express();
@@ -74,16 +75,16 @@ export const createApp = () => {
   // Input Sanitization (NoSQL + XSS protection)
   app.use(inputSanitizer);
 
-  // Suspicious activity detection
+  // Request parsing with size limits (must be before suspiciousActivityDetector)
+  app.use(express.json({ limit: '2mb' })); // Reduced from 10mb for security
+  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+  // Suspicious activity detection (after JSON parsing to avoid false positives)
   app.use(suspiciousActivityDetector);
 
   // Advanced security checks
   app.use(suspiciousUserAgentDetector);
   app.use(requestComplexityLimiter);
-
-  // Request parsing with size limits
-  app.use(express.json({ limit: '2mb' })); // Reduced from 10mb for security
-  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
   // Enhanced logging with data scrubbing
   app.use(pinoHttp({ logger }));
@@ -108,6 +109,9 @@ export const createApp = () => {
   app.use('/api/v1/cars', carRouter);
   app.use('/api/v1/activities', activityRouter);
   app.use('/api/v1/pack-relations', packRelationRouter);
+
+  // Real-time validation endpoints (standard rate limiting)
+  app.use('/api/v1/validation', validationRouter);
 
   // Sensitive endpoints with additional rate limiting
   app.use('/api/v1/guests', guestCreationLimit, guestRouter);

@@ -65,7 +65,8 @@ export const suspiciousActivityDetector = (
   const ip = req.ip || req.connection.remoteAddress || 'unknown';
   const userAgent = req.get('User-Agent') || 'unknown';
 
-  // Detect potential security threats
+  // Detect potential security threats (without command injection pattern for JSON body)
+  // Command injection pattern /[;&|`$(){}[\]]/g causes false positives because JSON contains {}
   const suspiciousPatterns = [
     // SQL injection attempts
     /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|CREATE|ALTER)\b)/i,
@@ -73,10 +74,10 @@ export const suspiciousActivityDetector = (
     /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
     // Path traversal attempts
     /(\.\.\/)|(\.\.\\)/g,
-    // Command injection attempts
-    /[;&|`$(){}[\]]/g,
+    // Note: Command injection pattern removed from here - checked separately for query/params only
   ];
 
+  // Check all data for SQL injection and XSS
   const requestData = JSON.stringify({
     query: req.query,
     body: req.body,
@@ -100,6 +101,31 @@ export const suspiciousActivityDetector = (
       });
       break;
     }
+  }
+
+  // Check command injection patterns ONLY in query and params (not in JSON body)
+  // JSON body contains {} naturally, so we exclude it from command injection check
+  const commandInjectionPattern = /[;&|`$]/g; // Removed (){}[] to avoid JSON false positives
+  const queryParamsOnly = JSON.stringify({
+    query: req.query,
+    params: req.params,
+  });
+
+  if (commandInjectionPattern.test(queryParamsOnly)) {
+    logSecurityEvent({
+      event: 'SUSPICIOUS_PATTERN_DETECTED',
+      severity: 'high',
+      ip,
+      userAgent,
+      path: req.path,
+      method: req.method,
+      timestamp: new Date(),
+      metadata: {
+        pattern: commandInjectionPattern.toString(),
+        matchedData: queryParamsOnly.match(commandInjectionPattern)?.[0],
+        scope: 'query_params_only', // Indicate this check is only for query/params
+      },
+    });
   }
 
   next();

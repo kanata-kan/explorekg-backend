@@ -65,6 +65,7 @@ export {
   strictRateLimit,
   guestCreationLimit,
   paymentRateLimit,
+  validationRateLimit, // Real-time validation rate limit (more lenient)
   progressiveSlowDown,
   sessionFingerprintValidator,
 } from '../middleware/security';

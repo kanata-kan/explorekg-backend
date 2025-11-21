@@ -4,6 +4,7 @@ import TravelPack from '../models/travelPack.model';
 import { Activity } from '../models/activity.model';
 import { Car } from '../models/car.model';
 import { NotFoundError, ValidationError } from '../utils/AppError';
+import { validatePricingBreakdown } from './pricingValidation.service';
 import { excludeDeleted } from '../utils/softDelete.util';
 // Pricing Service imports
 import { calculatePackRelationPrice, calculateDeposit } from './pricing.service';
@@ -331,6 +332,7 @@ export const getDetailedPack = async (
  * @param activities - List of detailed activities with finalPrice computed
  * @param cars - List of detailed cars with totalPrice computed
  * @param pricingConfig - Pricing strategy and discount settings
+ * @param numberOfPersons - Number of persons for per-person pricing (default: 1)
  * @returns Pricing breakdown with deposit (20% of finalTotal)
  */
 export const calculateTotalPrice = (
@@ -340,9 +342,11 @@ export const calculateTotalPrice = (
     strategy: 'sum' | 'custom';
     customPrice?: number;
     globalDiscount?: number;
-  }
+  },
+  numberOfPersons: number = 1
 ): PricingBreakdown => {
   // If custom strategy, use customPrice and ignore item calculations
+  // Note: Custom price remains fixed (not per person)
   if (pricingConfig.strategy === 'custom' && pricingConfig.customPrice) {
     const finalTotal = pricingConfig.customPrice;
     // Use DepositPolicy for consistent deposit calculation
@@ -364,20 +368,27 @@ export const calculateTotalPrice = (
   const optionalActivities = activities.filter(a => a.optional && !a.missing);
   const validCars = cars.filter(c => !c.missing);
 
+  // Calculate activities total and scale by numberOfPersons
+  // Activities are priced per person, so multiply by numberOfPersons
   const activitiesTotal = requiredActivities.reduce(
     (sum, a) => sum + a.finalPrice,
     0
-  );
+  ) * numberOfPersons;
 
+  // Calculate optional activities total and scale by numberOfPersons
+  // Optional activities are also priced per person
   const optionalActivitiesTotal = optionalActivities.reduce(
     (sum, a) => sum + a.finalPrice,
     0
-  );
+  ) * numberOfPersons;
 
+  // Cars are NOT per-person pricing, so no multiplication
+  // Car rental price remains fixed regardless of numberOfPersons
   const carsTotal = validCars.reduce((sum, c) => sum + c.totalPrice, 0);
 
   // Use unified PricingService for consistent pricing calculations
   // Note: Pack relations don't include tax in finalTotal (tax is calculated separately if needed)
+  // Note: Selected optional activities are now included in subtotal calculation
   const pricing = calculatePackRelationPrice(
     activitiesTotal,
     carsTotal,
@@ -397,6 +408,19 @@ export const calculateTotalPrice = (
   // finalTotal = subtotal - discount (no tax for pack relations)
   const finalTotal = subtotal - discountAmount;
   const deposit = pricing.deposit || DepositPolicy.calculateDeposit(finalTotal);
+
+  // Defensive validation layer - acts as guardrail without changing results
+  validatePricingBreakdown(
+    {
+      subtotal,
+      globalDiscount,
+      discountAmount,
+      finalTotal,
+      deposit,
+      tax: 0, // Pack relations don't include tax
+    },
+    { strictMode: true }
+  );
 
   return {
     activitiesTotal: Math.round(activitiesTotal * 100) / 100,
@@ -418,6 +442,7 @@ export const calculateTotalPrice = (
  * @param selectedCarId - Selected car localeGroupId (optional)
  * @param carDurationDays - Custom duration for car rental
  * @param locale - Requested locale
+ * @param numberOfPersons - Number of persons for per-person pricing (default: 1)
  * @returns Pricing breakdown for custom selection
  */
 export const calculateCustomPrice = async (
@@ -425,7 +450,8 @@ export const calculateCustomPrice = async (
   selectedActivityIds: string[],
   selectedCarId: string | null,
   carDurationDays: number | null,
-  locale: 'en' | 'fr'
+  locale: 'en' | 'fr',
+  numberOfPersons: number = 1
 ): Promise<{
   breakdown: PricingBreakdown;
   selectedItems: {
@@ -566,10 +592,13 @@ export const calculateCustomPrice = async (
   }
 
   // Calculate pricing
+  // Pass numberOfPersons to scale activities (required and optional) by number of persons
+  // Cars remain fixed (not per-person pricing)
   const breakdown = calculateTotalPrice(
     detailedActivities,
     detailedCar ? [detailedCar] : [],
-    relation.pricing
+    relation.pricing,
+    numberOfPersons
   );
 
   return {

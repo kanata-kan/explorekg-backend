@@ -145,8 +145,9 @@ export const calculatePackRelationPrice = (
   total: number;
   deposit?: number;
 } => {
-  // Subtotal = required activities + cars (optional activities not included)
-  const subtotal = activitiesTotal + carsTotal;
+  // Subtotal = required activities + optional activities + cars
+  // Note: Only selected optional activities are included (those explicitly chosen by user)
+  const subtotal = activitiesTotal + optionalActivitiesTotal + carsTotal;
 
   // Apply global discount if provided
   let discountAmount = 0;

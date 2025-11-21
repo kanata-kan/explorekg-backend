@@ -176,6 +176,21 @@ export const paymentRateLimit = rateLimit({
   },
 });
 
+// Real-time validation rate limiting (more lenient for auto-fill and debouncing scenarios)
+export const validationRateLimit = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute (shorter window for real-time)
+  max: ENV.NODE_ENV === 'production' ? 200 : 2000, // Higher limit for real-time validation
+  message: {
+    success: false,
+    error: 'Too many validation requests, please slow down.',
+    retryAfter: '1 minute',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipFailedRequests: true, // Don't count aborted/failed requests (important for auto-fill scenarios)
+  skipSuccessfulRequests: false, // Count all successful requests
+});
+
 // Slow down middleware for progressive delays
 export const progressiveSlowDown = slowDown({
   windowMs: 15 * 60 * 1000, // 15 minutes

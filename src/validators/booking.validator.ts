@@ -117,21 +117,61 @@ export const bookingCreateSchema = z
       .string({
         message: 'Start date must be a string',
       })
-      .datetime({
-        message: 'Start date must be a valid ISO 8601 datetime',
+      .refine((val) => {
+        // Accept both ISO date (YYYY-MM-DD) and ISO datetime (YYYY-MM-DDTHH:mm:ss.sssZ)
+        const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+        const isoDateTimePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+        return isoDatePattern.test(val) || isoDateTimePattern.test(val);
+      }, {
+        message: 'Start date must be a valid ISO date (YYYY-MM-DD) or ISO datetime (YYYY-MM-DDTHH:mm:ss.sssZ)',
+      })
+      .refine((val) => {
+        // Validate that it's a valid date
+        const date = new Date(val);
+        return !isNaN(date.getTime());
+      }, {
+        message: 'Start date must be a valid date',
       })
       .optional()
-      .transform(val => (val ? new Date(val) : undefined)),
+      .transform(val => {
+        if (!val) return undefined;
+        // If it's ISO date format (YYYY-MM-DD), add time component
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          return new Date(val + 'T00:00:00.000Z');
+        }
+        // If it's already ISO datetime, parse directly
+        return new Date(val);
+      }),
 
     endDate: z
       .string({
         message: 'End date must be a string',
       })
-      .datetime({
-        message: 'End date must be a valid ISO 8601 datetime',
+      .refine((val) => {
+        // Accept both ISO date (YYYY-MM-DD) and ISO datetime (YYYY-MM-DDTHH:mm:ss.sssZ)
+        const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+        const isoDateTimePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+        return isoDatePattern.test(val) || isoDateTimePattern.test(val);
+      }, {
+        message: 'End date must be a valid ISO date (YYYY-MM-DD) or ISO datetime (YYYY-MM-DDTHH:mm:ss.sssZ)',
+      })
+      .refine((val) => {
+        // Validate that it's a valid date
+        const date = new Date(val);
+        return !isNaN(date.getTime());
+      }, {
+        message: 'End date must be a valid date',
       })
       .optional()
-      .transform(val => (val ? new Date(val) : undefined)),
+      .transform(val => {
+        if (!val) return undefined;
+        // If it's ISO date format (YYYY-MM-DD), add time component
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          return new Date(val + 'T00:00:00.000Z');
+        }
+        // If it's already ISO datetime, parse directly
+        return new Date(val);
+      }),
 
     locale: z
       .enum(['en', 'fr'], {

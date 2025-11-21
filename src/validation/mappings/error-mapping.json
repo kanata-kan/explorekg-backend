@@ -1,0 +1,63 @@
+{
+  "errorMappings": {
+    "INVALID_FORMAT": {
+      "uiKey": "validation.format.invalid",
+      "severity": "error",
+      "fieldMapping": {
+        "guestId": "guest.id",
+        "itemId": "item.id",
+        "startDate": "dates.start",
+        "endDate": "dates.end"
+      }
+    },
+    "OUT_OF_RANGE": {
+      "uiKey": "validation.range.out_of_bounds",
+      "severity": "error"
+    },
+    "REQUIRED_FIELD": {
+      "uiKey": "validation.required",
+      "severity": "error"
+    },
+    "GUEST_NOT_FOUND": {
+      "uiKey": "guest.not_found",
+      "severity": "error"
+    },
+    "GUEST_EXPIRED": {
+      "uiKey": "guest.session_expired",
+      "severity": "error"
+    },
+    "ITEM_NOT_FOUND": {
+      "uiKey": "item.not_found",
+      "severity": "error"
+    },
+    "ITEM_UNAVAILABLE": {
+      "uiKey": "item.unavailable",
+      "severity": "error"
+    },
+    "DATES_OVERLAP": {
+      "uiKey": "dates.overlap",
+      "severity": "error"
+    },
+    "INVALID_DATE_RANGE": {
+      "uiKey": "dates.invalid_range",
+      "severity": "error"
+    },
+    "PAST_DATE": {
+      "uiKey": "dates.past_date",
+      "severity": "error"
+    },
+    "OPTIMISTIC_AVAILABILITY": {
+      "uiKey": "dates.optimistic_warning",
+      "severity": "warning"
+    },
+    "BUSINESS_RULE": {
+      "uiKey": "validation.business_rule",
+      "severity": "error"
+    },
+    "NOT_IMPLEMENTED": {
+      "uiKey": "validation.not_implemented",
+      "severity": "error"
+    }
+  }
+}
+
